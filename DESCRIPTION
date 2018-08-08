@@ -1,9 +1,27 @@
 Package: VCFArray
-Title: What the Package Does (one line, title case)
+Title: Representing on-disk / remote VCF files as array-like objects
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-Depends: R (>= 3.5.1)
-License: What license is it under?
+Authors@R: c(
+    person("Qian", "Liu", email = "qliu7@buffalo.edu", role = c("aut", "cre")),	
+    person("Martin", "Morgan", role = "aut"))	       
+Description: Representing on-disk / remote VCF files as array-like objects,
+    array data under "FORMAT" field could be converted into array-like objects. 
+biocViews: Infrastructure, DataRepresentation, Sequencing
+Depends:
+    R (>= 3.5),
+    DelayedArray (>= 0.7.24)
+License: GPL-3
 Encoding: UTF-8
-LazyData: true
+URL: https://github.com/Liubuntu/VCFArray
+BugReports: https://github.com/Liubuntu/VCFArray/issues
+Imports:
+    GenomicRanges,
+    VariantAnnotation,
+    GenomicFiles,
+    S4Vectors (>= 0.19.19),
+    Rsamtools
+RoxygenNote: 6.1.0
+VignetteBuilder: knitr
+Suggests:
+    BiocStyle,
+    BiocManager

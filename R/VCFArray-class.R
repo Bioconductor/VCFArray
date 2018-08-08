@@ -26,6 +26,7 @@ setMethod("show", "VCFArraySeed", function(object)
         sep="")
 })
 
+#' @import GenomicRanges
 .extract_array_from_VCFArray <- function(x, index)
 {
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
@@ -36,14 +37,30 @@ setMethod("show", "VCFArraySeed", function(object)
         dim(ans) <- ans_dim
     } else {
         vcf <- VcfFile(path(x))
-        ridx <- index[[1]]  ## FIXME: here ignoring the column index. 
-        gr <- granges(rowRanges(readVcf(vcf)))  ## FIXME, readVcf() heavy? 
-        gr$pos <- seq_along(gr)
-        res <- scanVcf(vcf, param = gr[gr$pos %in% ridx])
-        ans <- lapply(seq_len(length(res)), function(i) res[[i]]$GENO[[x@name]])
-        ans <- do.call(rbind, ans)
+        header <- scanVcfHeader(vcf)
+        ridx <- index[[1]]
+        ## if(is.null(ridx))
+        ##     cidx <- seq_along(samples(scanVcfHeader(vcf)))
         cidx <- index[[2]]
-        ans <- ans[, cidx]
+        if(is.null(cidx))
+            cidx <- seq_along(samples(scanVcfHeader(vcf)))
+
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)  ## lightweight
+                                                                 ## filter. Only
+                                                                 ## return
+                                                                 ## REF,
+                                                                 ## rowRanges
+        gr <- granges(rowRanges(readVcf(vcf, genome = "hg19", param = param))) 
+        ## gr <- granges(rowRanges(readVcf(vcf)))  ## FIXME, readVcf() heavy? 
+        gr$pos <- seq_along(gr)
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = x@name,
+                              which = gr[gr$pos %in% ridx],
+                              samples = samples(header)[cidx])
+        res <- readVcf(vcf, genome = "hg19", param = param)
+        ans <- geno(res)[[1]]
+        ## res <- scanVcf(vcf, param = gr[gr$pos %in% ridx])
+        ## ans <- lapply(seq_len(length(res)), function(i) res[[i]]$GENO[[x@name]])
+        ## ans <- do.call(rbind, ans)
     }
     ans
 }
@@ -54,9 +71,19 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 ### VCFArraySeed constructor
 ### ---------------------------
 
+#' @import VariantAnnotation
+#' @importFrom Rsamtools countTabix
 VCFArraySeed <- function(path = character(), name = character())
 {
-    vcf <- VcfFile(path)
+    if (!isSingleString(path))
+        stop(wmsg(
+            "'path' must be a single string specifying the path to ",
+            "the vcf file where the assay data is located."))
+    if (!isSingleString(name))
+        stop("'name' must be a single string.")
+    if(file.exists(path)) path <- normalizePath(path)  ## in base R
+    
+    vcf <- VcfFile(path, index = paste(path, "tbi", sep = "."))
     header <- scanVcfHeader(vcf)
 
     stopifnot(name %in% rownames(geno(header)))
@@ -87,7 +114,7 @@ VCFArray <- function(path, name=NA)
         seed <- path
     } else {
         if (is.na(name)) {
-            vcf <- VcfFile(path)
+            vcf <- VcfFile(path, index = paste(path, "tbi", sep="."))
             header <- scanVcfHeader(vcf)
             geno <- rownames(geno(header))
             if (length(geno) == 1) {
@@ -105,9 +132,22 @@ VCFArray <- function(path, name=NA)
     DelayedArray(seed)   ## does the automatic coercion to VCFMatrix if 2-dim.
 }
 
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Validity
-###
+### -------------------
+### other classes
+### -------------------
+
+## setClass("VCFMatrix", contains=c("DelayedMatrix", "VCFArray"))
+## setMethod("matrixClass", "VCFArray", function(x) "VCFMatrix")
+## setAs("VCFArray", "VCFMatrix", function(from) new("VCFMatrix", from))
+## setAs("VCFMatrix", "VCFArray", function(from) from)
+## setAs(
+##     "ANY", "VCFMatrix",
+##     function(from) as(as(from, "VCFArray"), "VCFMatrix"))
+
+
+### -----------------
+### Validity check
+### -----------------
 
 .validate_VCFArray <- function(x)
 {
@@ -117,3 +157,16 @@ VCFArray <- function(path, name=NA)
 }
 
 setValidity2("VCFArray", .validate_VCFArray)
+
+### -------------
+### example 
+### -------------
+
+## setMethod("example", "VCFArray", function (topic = "ANY", package = "VCFArray")
+## {
+##     fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+##     seed <- VCFArraySeed(fl, "GT")
+##     ## seed <- VCFArraySeed(fl, "DS")
+##     ## seed <- VCFArraySeed(fl, "GL")
+##     VCFArray(seed)
+## })
