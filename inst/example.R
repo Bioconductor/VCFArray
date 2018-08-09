@@ -1,6 +1,7 @@
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
 seed <- VCFArraySeed(fl, name = "GT")
-VCFArray(seed)[1:12, ]
+VCFArray(seed)
+VCFArray(seed)[1:12, ]  ## simple operation degrades "VCFMatrix" into "DelayedMatrix". 
 
 seed <- VCFArraySeed(fl, name = "DS")
 VCFArray(seed)
@@ -55,7 +56,10 @@ va
 vcf <- VcfFile(chr22url, index=chr22url.tbi, yieldSize = 10000)
 header <- scanVcfHeader(vcf)
 
-## figure out how to select 
+### -------------------------------
+## figure out how to select
+### -------------------------------
+
 param <- ScanVcfParam(info = sample(rownames(info(header)), 2), geno = "GT", samples= samples(header)[1:10])
 param <- ScanVcfParam(info = NA, fixed = NA, geno = "GT")
 a <- scanVcf(vcf, param = param)

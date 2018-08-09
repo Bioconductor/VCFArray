@@ -1,0 +1,21 @@
+1. bug in document(). error returns for VCFArray(seed) after document(): 
+
+```{r}
+seed <- VCFArraySeed(fl, name = "GL")
+VCFArray(seed)
+## Error in validObject(.Object) : invalid class “DelayedMatrix” object: 
+##     'x' must have exactly 2 dimensions
+traceback()
+## 10: stop(msg, ": ", errors, domain = NA)
+## 9: validObject(.Object)
+## 8: initialize(value, ...)
+## 7: initialize(value, ...)
+## 6: new(...)
+## 5: new2(Class, seed = seed)
+## 4: new_DelayedArray(seed, Class = "VCFArray") at VCFArray-class.R#104
+## 3: DelayedArray(seed)
+## 2: DelayedArray(seed) at VCFArray-class.R#131
+## 1: VCFArray(seed)
+```
+
+2. 

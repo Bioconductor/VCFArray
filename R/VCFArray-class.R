@@ -135,13 +135,13 @@ VCFArray <- function(file = character(), index = character(), name=NA)
 ### other classes
 ### -------------------
 
-## setClass("VCFMatrix", contains=c("DelayedMatrix", "VCFArray"))
-## setMethod("matrixClass", "VCFArray", function(x) "VCFMatrix")
-## setAs("VCFArray", "VCFMatrix", function(from) new("VCFMatrix", from))
-## setAs("VCFMatrix", "VCFArray", function(from) from)
-## setAs(
-##     "ANY", "VCFMatrix",
-##     function(from) as(as(from, "VCFArray"), "VCFMatrix"))
+setClass("VCFMatrix", contains=c("DelayedMatrix", "VCFArray"))
+setMethod("matrixClass", "VCFArray", function(x) "VCFMatrix")
+setAs("VCFArray", "VCFMatrix", function(from) new("VCFMatrix", from))
+setAs("VCFMatrix", "VCFArray", function(from) from)
+setAs(
+    "ANY", "VCFMatrix",
+    function(from) as(as(from, "VCFArray"), "VCFMatrix"))
 
 
 ### -----------------
