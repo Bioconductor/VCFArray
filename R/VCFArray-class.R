@@ -5,22 +5,27 @@
 setClass("VCFArray", contains = "DelayedArray")
 setClass("VCFArraySeed",
          contains = "Array",
-         slots = c(path = "character",
+         slots = c(vcffile = "VcfFile",
                    name = "character",
                    dim = "integer",
-                   dimnames = "list"))
+                   dimnames = "list",
+                   gr = "GRanges"))
 
 ### -------------------------
 ### VCFArraySeed methods
 ### -------------------------
 
 setMethod("dim", "VCFArraySeed", function(x) x@dim)
-setMethod("path", "VCFArraySeed", function(object) object@path)
+setGeneric("vcffile", function(x) standardGeneric("vcffile"))
+setMethod("vcffile", "VCFArraySeed", function(x) x@vcffile)
+setMethod("rowRanges", "VCFArraySeed", function(x) x@gr)
 
 setMethod("show", "VCFArraySeed", function(object)
 {
+    vcf <- vcffile(object)
     cat("VCFArraySeed\n",
-        "file path: ", path(object), "\n",
+        "VCF file path: ", path(vcf), "\n",
+        "VCF index path: ", index(vcf), "\n",
         "array data: ", object@name, "\n",
         "dim: ", paste(dim(object), collapse=" x "), "\n",
         sep="")
@@ -30,37 +35,23 @@ setMethod("show", "VCFArraySeed", function(object)
 .extract_array_from_VCFArray <- function(x, index)
 {
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
-    
     tp <- ifelse(x@name == "GT", "character", "integer")  ## FIXME
     if (any(ans_dim == 0L)){
         ans <- eval(parse(text = tp))(0)  ## return integer(0) / character(0)
         dim(ans) <- ans_dim
     } else {
-        vcf <- VcfFile(path(x))
-        header <- scanVcfHeader(vcf)
+        vcf <- vcffile(x)
         ridx <- index[[1]]
-        ## if(is.null(ridx))
-        ##     cidx <- seq_along(samples(scanVcfHeader(vcf)))
+        if(is.null(ridx))
+            ridx <- seq_len(nrow(x))
         cidx <- index[[2]]
         if(is.null(cidx))
-            cidx <- seq_along(samples(scanVcfHeader(vcf)))
-
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)  ## lightweight
-                                                                 ## filter. Only
-                                                                 ## return
-                                                                 ## REF,
-                                                                 ## rowRanges
-        gr <- granges(rowRanges(readVcf(vcf, genome = "hg19", param = param))) 
-        ## gr <- granges(rowRanges(readVcf(vcf)))  ## FIXME, readVcf() heavy? 
-        gr$pos <- seq_along(gr)
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = x@name,
-                              which = gr[gr$pos %in% ridx],
-                              samples = samples(header)[cidx])
-        res <- readVcf(vcf, genome = "hg19", param = param)
-        ans <- geno(res)[[1]]
-        ## res <- scanVcf(vcf, param = gr[gr$pos %in% ridx])
-        ## ans <- lapply(seq_len(length(res)), function(i) res[[i]]$GENO[[x@name]])
-        ## ans <- do.call(rbind, ans)
+            cidx <- seq_len(ncol(x))
+        gr <- x@gr
+        param <- ScanVcfParam(which = gr[gr$pos %in% ridx],
+                              samples = colnames(x)[cidx])
+        res <- readGeno(vcf, x@name, param = param)
+        ans <- res
     }
     ans
 }
@@ -73,26 +64,35 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 
 #' @import VariantAnnotation
 #' @importFrom Rsamtools countTabix
-VCFArraySeed <- function(path = character(), name = character())
+VCFArraySeed <- function(file = character(), index = character(), name = character())
 {
-    if (!isSingleString(path))
+    if (!isSingleString(file))
         stop(wmsg(
-            "'path' must be a single string specifying the path to ",
+            "'file' must be a single string specifying the path to ",
             "the vcf file where the assay data is located."))
     if (!isSingleString(name))
-        stop("'name' must be a single string.")
-    if(file.exists(path)) path <- normalizePath(path)  ## in base R
-    
-    vcf <- VcfFile(path, index = paste(path, "tbi", sep = "."))
+        stop(wmsg("'name' must be a single string specifying the name of ",
+                  "the assay data corresponding to the vcf 'FORMAT' field."))
+    if(file.exists(file)) file <- normalizePath(file)  ## in base R
+
+    if (!length(index)) index = paste(file, "tbi", sep = ".")
+    vcf <- VcfFile(file, index = index)
     header <- scanVcfHeader(vcf)
 
     stopifnot(name %in% rownames(geno(header)))
     nsamps <- length(samples(header))
-    nvars <- countTabix(vcf)[[1]]
+
+    param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
+    ## lightweight filter. Only return REF, rowRanges
+    gr <- granges(rowRanges(readVcf(vcf, genome = "hg19", param = param))) 
+    gr$pos <- seq_along(gr)
+
+    nvars <- length(gr)
     
-    new("VCFArraySeed", path = path, name = name,
+    new("VCFArraySeed", vcffile = vcf, name = name,
         dim = c(nvars, nsamps),
-        dimnames = list(seq_len(nvars), samples(header)))
+        dimnames = list(names(gr), samples(header)),
+        gr = gr)
 }
 
 ### --------------
@@ -104,18 +104,17 @@ setMethod(
     function(seed) new_DelayedArray(seed, Class="VCFArray")  ## need "extract_array" to work.
     )
 
-VCFArray <- function(path, name=NA)
+VCFArray <- function(file = character(), index = character(), name=NA)
 {
-    if (is(path, "VCFArraySeed")) {
+    if (is(file, "VCFArraySeed")) {
         if (!missing(name))
             stop(wmsg(
                 "VCFArray() must be called with a single argument ",
                 "when passed an VCFArraySeed object"))
-        seed <- path
+        seed <- file
     } else {
         if (is.na(name)) {
-            vcf <- VcfFile(path, index = paste(path, "tbi", sep="."))
-            header <- scanVcfHeader(vcf)
+            header <- scanVcfHeader(file)
             geno <- rownames(geno(header))
             if (length(geno) == 1) {
                 name <- geno
@@ -127,7 +126,7 @@ VCFArray <- function(path, name=NA)
                 name <- "GT"
             }
         }
-        seed <- VCFArraySeed(path, name)
+        seed <- VCFArraySeed(file, index = index, name = name)
     }
     DelayedArray(seed)   ## does the automatic coercion to VCFMatrix if 2-dim.
 }

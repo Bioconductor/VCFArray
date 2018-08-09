@@ -1,36 +1,56 @@
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
-seed <- VCFArraySeed(fl, "GT")
+seed <- VCFArraySeed(fl, name = "GT")
+VCFArray(seed)[1:12, ]
+
+seed <- VCFArraySeed(fl, name = "DS")
 VCFArray(seed)
-seed <- VCFArraySeed(fl, "DS")
-VCFArray(seed)
-seed <- VCFArraySeed(fl, "GL")
+seed <- VCFArraySeed(fl, name = "GL")
 VCFArray(seed)
 
 
 bg <- system.file("extdata", "CEU_Exon.vcf.bgz", package="SeqArray")
-VAseed <- VCFArraySeed(bg, "GT")
+VAseed <- VCFArraySeed(bg, name = "GT")
 VAseed
 dim(VAseed)
-path(VAseed)
+vcffile(VAseed)
 DelayedArray(VAseed)
-identical(VCFArray(VAseed), VCFArray(bg, "GT"))
+VCFArray(VAseed)
+all.equal(VCFArray(VAseed), VCFArray(bg, name = "GT"))
 
-VAseed1 <- VCFArraySeed(bg, "DP")
+VAseed1 <- VCFArraySeed(bg, name = "DP")
 VAseed1
 dim(VAseed1)
-path(VAseed1)
+vcffile(VAseed1)
 DelayedArray(VAseed1)
-
-fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
-VcfFile(fl)
-seed <- VCFArraySeed(fl, "GT")
-VCFArray(seed)
 
 chr22url <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"
 chr22url.tbi <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr21.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi"
 
-seed <- VCFArraySeed(chr22url, "GT")
+## VcfFile(, index = ), will check for file.exists(), so must manually specify the "index" argument.
+## 
+
+seed <- VCFArraySeed(chr22url, name = "GT")
 va <- VCFArray(seed)
+
+va[1:5, 1:5]  ## upper-left
+va[1:5, seq(to=ncol(va), length.out=5)]  ## upper-right, FAILED. 
+va[seq(to=nrow(va), length.out=5), 1:5]  ## lower-left
+va[seq(to=nrow(va), length.out=5), seq(to=ncol(va), length.out=5)]  ## lower-right
+va
+## <1105538 x 2504> DelayedMatrix object of type "character":
+##             HG00096 HG00097 HG00099 ... NA21143 NA21144
+## rs559462325 "0|0"   "0|0"   "0|0"   .   "0|0"   "0|0"  
+## rs181691356 "0|0"   "0|0"   "0|0"   .   "0|0"   "0|0"  
+## rs548263598 "0|0"   "0|0"   "0|0"   .   "0|0"   "0|0"  
+## rs561987868 "0|0"   "0|0"   "0|0"   .   "0|0"   "0|0"  
+## rs531010746 "0|0"   "0|0"   "0|0"   .   "0|0"   "0|0"  
+## ...         .       .       .       .   .       .      
+## rs374001814 "0|0"   "1|0"   "0|0"   .   "0|0"   "0|0"  
+## rs149048580 "0|0"   "0|0"   "0|1"   .   "0|0"   "1|0"  
+## rs555877612 "0|0"   "0|0"   "0|0"   .   "0|0"   "0|0"  
+## rs574115117 "0|0"   "0|0"   "0|0"   .   "0|0"   "0|0"  
+## rs541185110 "0|0"   "0|0"   "0|0"   .   "0|0"   "0|0"  
+
 
 vcf <- VcfFile(chr22url, index=chr22url.tbi, yieldSize = 10000)
 header <- scanVcfHeader(vcf)
