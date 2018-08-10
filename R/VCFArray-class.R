@@ -2,7 +2,6 @@
 ### classes
 ### -------------------------
 
-setClass("VCFArray", contains = "DelayedArray")
 setClass("VCFArraySeed",
          contains = "Array",
          slots = c(vcffile = "VcfFile",
@@ -95,8 +94,35 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
         gr = gr)
 }
 
+### -------------------
+### VCFArray class
+### -------------------
+
+setClass("VCFArray", contains = "DelayedArray")
+setClass("VCFMatrix", contains=c("DelayedMatrix", "VCFArray"))
+setMethod("matrixClass", "VCFArray", function(x) "VCFMatrix")
+setAs("VCFArray", "VCFMatrix", function(from) new("VCFMatrix", from))
+setAs("VCFMatrix", "VCFArray", function(from) from)
+setAs(
+    "ANY", "VCFMatrix",
+    function(from) as(as(from, "VCFArray"), "VCFMatrix"))
+
+
+### -----------------
+### Validity check
+### -----------------
+
+.validate_VCFArray <- function(x)
+{
+    if (!is(x@seed, "VCFArraySeed"))
+        return(wmsg("'x@seed' must be a VCFArraySeed object"))
+    TRUE
+}
+
+setValidity2("VCFArray", .validate_VCFArray)
+
 ### --------------
-### VCFArray 
+### VCFArray constructor
 ### --------------
 
 setMethod(
@@ -130,33 +156,6 @@ VCFArray <- function(file = character(), index = character(), name=NA)
     }
     DelayedArray(seed)   ## does the automatic coercion to VCFMatrix if 2-dim.
 }
-
-### -------------------
-### other classes
-### -------------------
-
-setClass("VCFMatrix", contains=c("DelayedMatrix", "VCFArray"))
-setMethod("matrixClass", "VCFArray", function(x) "VCFMatrix")
-setAs("VCFArray", "VCFMatrix", function(from) new("VCFMatrix", from))
-setAs("VCFMatrix", "VCFArray", function(from) from)
-setAs(
-    "ANY", "VCFMatrix",
-    function(from) as(as(from, "VCFArray"), "VCFMatrix"))
-
-
-### -----------------
-### Validity check
-### -----------------
-
-.validate_VCFArray <- function(x)
-{
-    if (!is(x@seed, "VCFArraySeed"))
-        return(wmsg("'x@seed' must be a VCFArraySeed object"))
-    TRUE
-}
-
-setValidity2("VCFArray", .validate_VCFArray)
-
 ### -------------
 ### example 
 ### -------------
