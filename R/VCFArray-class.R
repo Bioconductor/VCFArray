@@ -2,9 +2,11 @@
 ### classes
 ### -------------------------
 
+setClassUnion("VcfFile_OR_VcfStack", c("VcfFile", "VcfStack"))
+
 setClass("VCFArraySeed",
          contains = "Array",
-         slots = c(vcffile = "VcfFile",
+         slots = c(vcffile = c("VcfFile_OR_VcfStack"),
                    name = "character",
                    dim = "integer",
                    dimnames = "list",
@@ -22,12 +24,23 @@ setMethod("rowRanges", "VCFArraySeed", function(x) x@gr)
 setMethod("show", "VCFArraySeed", function(object)
 {
     vcf <- vcffile(object)
-    cat("VCFArraySeed\n",
-        "VCF file path: ", path(vcf), "\n",
-        "VCF index path: ", index(vcf), "\n",
-        "array data: ", object@name, "\n",
-        "dim: ", paste(dim(object), collapse=" x "), "\n",
-        sep="")
+    if (is(vcf, "VcfFile")) {
+        cat("VCFArraySeed\n",
+            "VCF file path: ", path(vcf), "\n",
+            "VCF index path: ", index(vcf), "\n",
+            "array data: ", object@name, "\n",
+            "dim: ", paste(dim(object), collapse=" x "), "\n",
+            sep="")
+    } else if (is(vcf, "VcfStack")) {
+        vcffiles <- files(vcf)
+        cat("VCFArraySeed\n",
+            "VcfStack object with ", nrow(vcf), " files and ", ncol(vcf), " samples", "\n", 
+            "VCF file path: \n", paste(unname(sapply(vcffiles, path))), "\n",
+            ## "VCF index path: ", index(vcf), "\n",
+            "array data: ", object@name, "\n",
+            "dim: ", paste(dim(object), collapse=" x "), "\n",
+            sep="")
+    }
 })
 
 #' @import GenomicRanges
@@ -62,30 +75,58 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 ### ---------------------------
 
 #' @import VariantAnnotation
-#' @importFrom Rsamtools countTabix
+## #' @importFrom Rsamtools countTabix
+
 VCFArraySeed <- function(file = character(), index = character(), name = character())
 {
-    if (!isSingleString(file))
-        stop(wmsg(
-            "'file' must be a single string specifying the path to ",
-            "the vcf file where the assay data is located."))
+    ## if (!isSingleString(file))
+    ##     stop(wmsg(
+    ##         "'file' must be a single string specifying the path to ",
+    ##         "the vcf file where the assay data is located."))
     if (!isSingleString(name))
         stop(wmsg("'name' must be a single string specifying the name of ",
                   "the assay data corresponding to the vcf 'FORMAT' field."))
-    if(file.exists(file)) file <- normalizePath(file)  ## in base R
 
-    if (!length(index)) index = paste(file, "tbi", sep = ".")
-    vcf <- VcfFile(file, index = index)
-    header <- scanVcfHeader(vcf)
-
+    if (is(file, "VcfFile")) {
+        vcf <- file
+        if (!is.na(index(vcf)) && length(index)) {
+            stop("'index' cannot be used when 'VcfFile' ",
+                 "input already has the index file.")
+        } else if (is.na(index(vcf))) {
+            if (length(index)) {
+                index(vcf) <- index
+            } else {
+                ## index(vcf) <- paste(path(vcf), "tbi", sep = ".")
+                vcf <- indexVcf(vcf)
+            }
+        }
+    } else if (is(file, "RangedVcfStack")) {
+        vcf <- file
+    } else if(isSingleString(file)) {
+        if(file.exists(file)) file <- normalizePath(file)  ## in base R
+        if (!length(index)) index = paste(file, "tbi", sep = ".")
+        vcf <- VcfFile(file, index = index)
+    }
+    ## read the header info
+    if (is(vcf, "VcfStack")) {
+        header <- scanVcfHeader(files(vcf)[[1]])
+    } else {
+        header <- scanVcfHeader(vcf)
+    }
     stopifnot(name %in% rownames(geno(header)))
     nsamps <- length(samples(header))
-
-    param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
+    
     ## lightweight filter. Only return REF, rowRanges
-    gr <- granges(rowRanges(readVcf(vcf, genome = "hg19", param = param))) 
+    if (is(vcf, "RangedVcfStack")) {
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(vcf))
+        readvcf <- readVcfStack(vcf, param = param)
+    } else {
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, samples = )
+        readvcf <- readVcf(vcf, genome = "hg19", param = param)
+    }
+    gr <- granges(rowRanges(readvcf)) 
     gr$pos <- seq_along(gr)
-
+    
     nvars <- length(gr)
     
     new("VCFArraySeed", vcffile = vcf, name = name,
@@ -97,7 +138,7 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
 ### -------------------
 ### VCFArray class
 ### -------------------
-
+## ' @importClassesFrom DelayedArray DelayedArray DelayedMatrix
 setClass("VCFArray", contains = "DelayedArray")
 setClass("VCFMatrix", contains=c("DelayedMatrix", "VCFArray"))
 setMethod("matrixClass", "VCFArray", function(x) "VCFMatrix")
@@ -138,17 +179,20 @@ VCFArray <- function(file = character(), index = character(), name=NA)
                 "VCFArray() must be called with a single argument ",
                 "when passed an VCFArraySeed object"))
         seed <- file
-    } else {
+    } ## else if (is(file, "VcfStack")) {
+    ##     NULL
+    ## }
+    else {
         if (is.na(name)) {
-            header <- scanVcfHeader(file)
+            header <- scanVcfHeader(file) 
             geno <- rownames(geno(header))
             if (length(geno) == 1) {
                 name <- geno
             } else {
-                message(paste0('The Available values for "name" argument are: ',
+                message('The Available values for "name" argument are: ',
                                paste(geno, collapse=" "), "\n",
                                "Please specify, otherwise, ",
-                               'The default value of "GT" will be returned.', "\n"))
+                               'The default value of "GT" will be returned.', "\n")
                 name <- "GT"
             }
         }
@@ -156,6 +200,8 @@ VCFArray <- function(file = character(), index = character(), name=NA)
     }
     DelayedArray(seed)   ## does the automatic coercion to VCFMatrix if 2-dim.
 }
+
+## setMethod("seed", "VCFArray", function(x) x@seed)
 ### -------------
 ### example 
 ### -------------

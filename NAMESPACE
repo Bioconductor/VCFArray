@@ -2,4 +2,3 @@
 
 import(GenomicRanges)
 import(VariantAnnotation)
-importFrom(Rsamtools,countTabix)

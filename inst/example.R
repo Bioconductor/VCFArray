@@ -1,4 +1,6 @@
+library(VariantAnnotation)
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+vcf <- VcfFile(fl)
 seed <- VCFArraySeed(fl, name = "GT")
 VCFArray(seed)
 VCFArray(seed)[1:12, ]  ## simple operation degrades "VCFMatrix" into "DelayedMatrix". 
@@ -7,7 +9,6 @@ seed <- VCFArraySeed(fl, name = "DS")
 VCFArray(seed)
 seed <- VCFArraySeed(fl, name = "GL")
 VCFArray(seed)
-
 
 bg <- system.file("extdata", "CEU_Exon.vcf.bgz", package="SeqArray")
 VAseed <- VCFArraySeed(bg, name = "GT")
@@ -52,6 +53,49 @@ va
 
 vcf <- VcfFile(chr22url, index=chr22url.tbi, yieldSize = 10000)
 header <- scanVcfHeader(vcf)
+
+### -------------------------------
+## figure out how to select
+### -------------------------------
+
+library(GenomicFiles)
+extdata <- system.file(package="GenomicFiles", "extdata")
+files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)
+names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
+stack <- VcfStack(files)
+files(stack)  ## VcfFileList of length 7
+
+files(stack)[[1]]
+
+gr <- GRanges(c("7:1-159138000", "X:1-155270560"))
+## stack[i, j], i pass into ScanVcfParam(which), j pass into ScanVcfParam(samples). 
+param <- ScanVcfParam(geno="GT", which = gr, samples = colnames(stack)[c(1,3)])
+rvs <- readVcfStack(stack, param = param)
+geno(rvs)
+gt <- geno(rvs)[["GT"]]
+
+headers <- lapply(files(stack), scanVcfHeader)
+
+
+### -------------------------------
+## VcfStack as input
+### -------------------------------
+
+extdata <- system.file(package="GenomicFiles", "extdata")
+files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)
+names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
+
+## input data.frame describing the length of each sequence, coerce to
+## 'Seqinfo' object
+seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
+stack <- VcfStack(files, seqinfo)
+gr <- as(seqinfo(stack)[rownames(stack)], "GRanges")
+rgstack <- RangedVcfStack(stack, rowRanges = gr)  ## RangedVcfStack object (rowRanges() available)
+param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(rgstack))
+readvcf <- readVcfStack(stack, param = param)
+
+seed <- VCFArraySeed(rgstack, name = "GT")  ## success
+va <- VCFArray(seed)
 
 ### -------------------------------
 ## figure out how to select

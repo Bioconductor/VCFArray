@@ -1,5 +1,8 @@
 1. bug in document(). error returns for VCFArray(seed) after document(): 
 
+-- issue identified as bug in `devtools`: https://github.com/r-lib/devtools/issues/1845
+-- workaround now. export `DelayedUnaryOp` and `DelayedOp` classes from `DelayedArray` package (locally modified and installed. install.packages("/home/qian/Documents/Research/DelayedArray", repos=NULL)).
+
 ```{r}
 seed <- VCFArraySeed(fl, name = "GL")
 VCFArray(seed)
@@ -18,4 +21,21 @@ traceback()
 ## 1: VCFArray(seed)
 ```
 
-2. 
+2. Remove the `Rsamtools` from `DESCRIPTION, Imports` for now. Because the `Rsamtools::countTabix()` function is remove from our script.   -- done!
+
+3. VCFArraySeed(file = "VCFFile")  -- done!
+- if (!is.na(index(file)) && length(index)) stop()
+- if (is.na(index(file)) && length(index) ) index(file) = index
+- if (is.na(index(file)) && !length(index) ) index(file) = paste0(path(file), ".tbi")
+
+4. VCFArraySeed(file = "VCFStack")
+- ## need to convert VCFStack => VCFFile (combined). -- not practical. 
+- Check ?readVcfStack: lapply to each individual VCFFile and then rbind the VCF files. 
+- use readVCFStack(param = ) in VCFArraySeed() constructor. 
+
+Martin: 
+
+1. add method of scanVcfHeader::VcfStack, to return the shared header info for all VcfFile objects inside the VcfStack object. 
+
+
+
