@@ -34,9 +34,12 @@ setMethod("show", "VCFArraySeed", function(object)
     } else if (is(vcf, "VcfStack")) {
         vcffiles <- files(vcf)
         cat("VCFArraySeed\n",
-            "VcfStack object with ", nrow(vcf), " files and ", ncol(vcf), " samples", "\n", 
-            "VCF file path: \n", paste(unname(sapply(vcffiles, path))), "\n",
-            ## "VCF index path: ", index(vcf), "\n",
+            "VcfStack object with ", nrow(vcf), " files and ",
+            ncol(vcf), " samples", "\n", 
+            "VCF file path: ",
+            "'", path(vcffiles[[1]]), "' and ", nrow(vcf)-1, " more...", "\n",
+            "VCF index path: ",
+            "'", index(vcffiles[[1]]), "' and ", nrow(vcf)-1, " more...", "\n",
             "array data: ", object@name, "\n",
             "dim: ", paste(dim(object), collapse=" x "), "\n",
             sep="")
@@ -46,6 +49,7 @@ setMethod("show", "VCFArraySeed", function(object)
 #' @import GenomicRanges
 .extract_array_from_VCFArray <- function(x, index)
 {
+    ## browser()
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
     tp <- ifelse(x@name == "GT", "character", "integer")  ## FIXME
     if (any(ans_dim == 0L)){
@@ -62,8 +66,18 @@ setMethod("show", "VCFArraySeed", function(object)
         gr <- x@gr
         param <- ScanVcfParam(which = gr[gr$pos %in% ridx],
                               samples = colnames(x)[cidx])
-        res <- readGeno(vcf, x@name, param = param)
-        ans <- res
+        if(is(vcf, "VcfFile")) {
+            res <- readGeno(vcf, x@name, param = param)
+            ans <- res
+        } else if (is(vcf, "RangedVcfStack")) {
+            res <- readVcfStack(vcf, param = param)
+            ans <- geno(res)[[x@name]]
+        }
+        ans_dim <- dim(ans)
+        ## param <- ScanVcfParam(fixed = NA, info = NA, which = gr[gr$pos %in% ridx],
+        ##                       samples = colnames(x)[cidx])
+        ## res <- readVcf(vcf, x@name, param = param)
+        ## ans <- res
     }
     ans
 }
@@ -121,7 +135,7 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(vcf))
         readvcf <- readVcfStack(vcf, param = param)
     } else {
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, samples = )
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
         readvcf <- readVcf(vcf, genome = "hg19", param = param)
     }
     gr <- granges(rowRanges(readvcf)) 
@@ -179,12 +193,16 @@ VCFArray <- function(file = character(), index = character(), name=NA)
                 "VCFArray() must be called with a single argument ",
                 "when passed an VCFArraySeed object"))
         seed <- file
-    } ## else if (is(file, "VcfStack")) {
+    } ## else if (is(file, "RangedVcfStack")) {
     ##     NULL
     ## }
     else {
         if (is.na(name)) {
-            header <- scanVcfHeader(file) 
+            if (is(file, "RangedVcfStack")) {
+                header <- scanVcfHeader(files(file)[[1]])
+            } else {
+                header <- scanVcfHeader(file)   ## FIXME: add the "scanVcfHeader,VcfStack".
+            }
             geno <- rownames(geno(header))
             if (length(geno) == 1) {
                 name <- geno

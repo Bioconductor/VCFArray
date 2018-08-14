@@ -23,6 +23,25 @@ test_that("VCFArraySeed constructor works", {
     seed <- VCFArraySeed(vcf, index = index, name="DS")
     expect_true(validObject(seed))
     expect_equal(index(vcffile(seed)), index)
+
+    ## "RangedVcfStack" input
+    extdata <- system.file(package="GenomicFiles", "extdata")
+    files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)
+    names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
+    seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
+    stack <- VcfStack(files, seqinfo)
+    gr <- as(seqinfo(stack)[rownames(stack)], "GRanges")
+    rgstack <- RangedVcfStack(stack, rowRanges = gr)  ## RangedVcfStack object (rowRanges() available)
+    
+    seed <- VCFArraySeed(rgstack, name = "GT")  ## success
+    expect_true(validObject(seed))
+    expect_identical(dim(seed), c(1000L, 3L))
+
+    ## VCFArray constructor... to be moved...
+    va <- VCFArray(seed)
+    expect_identical(dim(va), c(1000L, 3L))
+    
+    va <- VCFArray(rgstack, name = "SB")
 })
 
 test_that("VCFArray constructor works", {
@@ -33,5 +52,6 @@ test_that("VCFArray constructor works", {
     VAsubset <- VA[1:12, ]  ## simple operation degrades "VCFMatrix" into "DelayedMatrix". 
     expect_s4_class(VAsubset, "DelayedMatrix")
 
+    
 
 })

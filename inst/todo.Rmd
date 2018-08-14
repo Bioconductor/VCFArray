@@ -28,10 +28,16 @@ traceback()
 - if (is.na(index(file)) && length(index) ) index(file) = index
 - if (is.na(index(file)) && !length(index) ) index(file) = paste0(path(file), ".tbi")
 
+4. save header info into `VCFArraySeed`. 
+- to extract the header info, geno(header)$Type in `extract_array`. 
+- fail if `VCFArray(name=NULL)` later in `VCFArraySeed(name = )` checking. 
+- extract the possible 3rd dimension of `VCFArraySeed` and save as @dim slot. 
+
 4. VCFArraySeed(file = "VCFStack")
 - ## need to convert VCFStack => VCFFile (combined). -- not practical. 
 - Check ?readVcfStack: lapply to each individual VCFFile and then rbind the VCF files. 
 - use readVCFStack(param = ) in VCFArraySeed() constructor. 
+- only takes in `RangedVcfStack` object, because it has the rowRanges() available, which is required for the `VCFArraySeed` constructor. 
 
 Martin: 
 
