@@ -94,8 +94,6 @@ setMethod("show", "VCFArraySeed", function(object)
         if (is(ans, "DataFrame")){
             ans <- ans[[1]]
        }
-    }
-    ans
 }
 
 setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
