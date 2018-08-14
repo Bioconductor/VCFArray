@@ -53,6 +53,13 @@ VCFArray(seed)  ## ERROR
 - rowData(): REF,ALT, QUAL, FILTER, paramRangeID?
 - info(AC, AF, AN, DB, DP, FS, QD, ...)
 
+1) header(fl/VcfFile)
+2) name %in% rownames(info(header)), 
+	readVcf(vcffile(seed), param = ScanVcfParam(info = name, fixed = NA, geno = NA, which = ...))
+3) name %in% names(fixed(header))
+	readVcf(vcffile(seed), param = ScanVcfparam(fixed = name, info = NA, geno = NA, which = ...))
+
+
 Martin: 
 
 1. add method of scanVcfHeader::VcfStack, to return the shared header info for all VcfFile objects inside the VcfStack object. 
