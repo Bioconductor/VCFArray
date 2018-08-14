@@ -29,15 +29,29 @@ traceback()
 - if (is.na(index(file)) && !length(index) ) index(file) = paste0(path(file), ".tbi")
 
 4. save header info into `VCFArraySeed`. 
-- to extract the header info, geno(header)$Type in `extract_array`. 
-- fail if `VCFArray(name=NULL)` later in `VCFArraySeed(name = )` checking. 
-- extract the possible 3rd dimension of `VCFArraySeed` and save as @dim slot. 
-
-4. VCFArraySeed(file = "VCFStack")
-- ## need to convert VCFStack => VCFFile (combined). -- not practical. 
+- to extract the header info, geno(header)$Type in `extract_array`.  -- done!
+- fail later if `VCFArray(name=NULL)` in `VCFArraySeed(name = )` checking.   -- done!
+- extract the possible 3rd dimension of `VCFArraySeed` and save as @dim slot. -- done!
+  
+5. VCFArraySeed(file = "VCFStack")
 - Check ?readVcfStack: lapply to each individual VCFFile and then rbind the VCF files. 
-- use readVCFStack(param = ) in VCFArraySeed() constructor. 
-- only takes in `RangedVcfStack` object, because it has the rowRanges() available, which is required for the `VCFArraySeed` constructor. 
+- use readVCFStack(param = ) in VCFArraySeed() constructor.   -- done!
+- only takes in `RangedVcfStack` object, because it has the rowRanges() available, which is required for the `VCFArraySeed` constructor. -- done!
+
+6. **BUG**: show method for >2 dimensional array. 
+```{r}
+rgstack
+seed <- VCFArraySeed(rgstack, name="SB")
+index <- list(1:2, NULL, NULL)
+extract_array(seed, index)
+index <- list(seq(to=nrow(seed), length.out=2), NULL, NULL)
+extract_array(seed, index)
+VCFArray(seed)  ## ERROR
+```
+
+7. How about the other data inside VCF? 
+- rowData(): REF,ALT, QUAL, FILTER, paramRangeID?
+- info(AC, AF, AN, DB, DP, FS, QD, ...)
 
 Martin: 
 

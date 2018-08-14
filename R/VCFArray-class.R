@@ -2,11 +2,13 @@
 ### classes
 ### -------------------------
 
-setClassUnion("VcfFile_OR_VcfStack", c("VcfFile", "VcfStack"))
+#' @import GenomicFiles
+setClassUnion("VcfFile_OR_RangedVcfStack", c("VcfFile", "RangedVcfStack"))
 
 setClass("VCFArraySeed",
          contains = "Array",
-         slots = c(vcffile = c("VcfFile_OR_VcfStack"),
+         slots = c(vcffile = c("VcfFile_OR_RangedVcfStack"),
+                   vcfheader = "VCFHeader",
                    name = "character",
                    dim = "integer",
                    dimnames = "list",
@@ -51,7 +53,8 @@ setMethod("show", "VCFArraySeed", function(object)
 {
     ## browser()
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
-    tp <- ifelse(x@name == "GT", "character", "integer")  ## FIXME
+    tp <- geno(x@vcfheader)[x@name, "Type"]  ## extract the "type" from seed@vcfheader.
+    tp <- sub("Integer", "integer", sub("String", "character", tp))
     if (any(ans_dim == 0L)){
         ans <- eval(parse(text = tp))(0)  ## return integer(0) / character(0)
         dim(ans) <- ans_dim
@@ -73,7 +76,7 @@ setMethod("show", "VCFArraySeed", function(object)
             res <- readVcfStack(vcf, param = param)
             ans <- geno(res)[[x@name]]
         }
-        ans_dim <- dim(ans)
+        ## ans_dim <- dim(ans)
         ## param <- ScanVcfParam(fixed = NA, info = NA, which = gr[gr$pos %in% ridx],
         ##                       samples = colnames(x)[cidx])
         ## res <- readVcf(vcf, x@name, param = param)
@@ -97,9 +100,9 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     ##     stop(wmsg(
     ##         "'file' must be a single string specifying the path to ",
     ##         "the vcf file where the assay data is located."))
-    if (!isSingleString(name))
-        stop(wmsg("'name' must be a single string specifying the name of ",
-                  "the assay data corresponding to the vcf 'FORMAT' field."))
+    ## if (!isSingleString(name))
+    ##     stop(wmsg("'name' must be a single string specifying the name of ",
+    ##               "the assay data corresponding to the vcf 'FORMAT' field."))
 
     if (is(file, "VcfFile")) {
         vcf <- file
@@ -110,7 +113,6 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
             if (length(index)) {
                 index(vcf) <- index
             } else {
-                ## index(vcf) <- paste(path(vcf), "tbi", sep = ".")
                 vcf <- indexVcf(vcf)
             }
         }
@@ -125,10 +127,22 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     if (is(vcf, "VcfStack")) {
         header <- scanVcfHeader(files(vcf)[[1]])
     } else {
-        header <- scanVcfHeader(vcf)
+        header <- scanVcfHeader(vcf)   ## FIXME: add the "scanVcfHeader,VcfStack".
     }
-    stopifnot(name %in% rownames(geno(header)))
-    nsamps <- length(samples(header))
+    geno <- rownames(geno(header))
+    msg <- paste0('The Available values for "name" argument are: ',
+                    paste(geno, collapse=" "), "\n")
+
+    ## check "name" argument
+    if (missing(name) && length(geno) == 1) {
+        name <- geno
+    } else if (missing(name)) {
+        message(msg, "Please specify, otherwise, ",
+                'The default value of "GT" will be returned.', "\n")
+        name <- "GT"
+    } else if (!name %in% geno) {
+        stop(msg, "Please specify correctly!")
+    }
     
     ## lightweight filter. Only return REF, rowRanges
     if (is(vcf, "RangedVcfStack")) {
@@ -141,11 +155,21 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     gr <- granges(rowRanges(readvcf)) 
     gr$pos <- seq_along(gr)
     
+    ## dims
+    nsamps <- length(samples(header))
+    extradim <- as.integer(geno(header)[name, "Number"])
     nvars <- length(gr)
+
+    dimnames <- list(names(gr), samples(header))
+    if (extradim != 1) {
+        dims <- c(nvars, nsamps, extradim)
+        dimnames[[3]] <- as.character(seq_len(extradim))
+    } else {
+        dims <- c(nvars, nsamps)
+    }
     
-    new("VCFArraySeed", vcffile = vcf, name = name,
-        dim = c(nvars, nsamps),
-        dimnames = list(names(gr), samples(header)),
+    new("VCFArraySeed", vcffile = vcf, vcfheader = header,
+        name = name, dim = dims, dimnames = dimnames, 
         gr = gr)
 }
 
@@ -197,23 +221,6 @@ VCFArray <- function(file = character(), index = character(), name=NA)
     ##     NULL
     ## }
     else {
-        if (is.na(name)) {
-            if (is(file, "RangedVcfStack")) {
-                header <- scanVcfHeader(files(file)[[1]])
-            } else {
-                header <- scanVcfHeader(file)   ## FIXME: add the "scanVcfHeader,VcfStack".
-            }
-            geno <- rownames(geno(header))
-            if (length(geno) == 1) {
-                name <- geno
-            } else {
-                message('The Available values for "name" argument are: ',
-                               paste(geno, collapse=" "), "\n",
-                               "Please specify, otherwise, ",
-                               'The default value of "GT" will be returned.', "\n")
-                name <- "GT"
-            }
-        }
         seed <- VCFArraySeed(file, index = index, name = name)
     }
     DelayedArray(seed)   ## does the automatic coercion to VCFMatrix if 2-dim.
@@ -232,3 +239,22 @@ VCFArray <- function(file = character(), index = character(), name=NA)
 ##     ## seed <- VCFArraySeed(fl, "GL")
 ##     VCFArray(seed)
 ## })
+
+        ## if (is.na(name)) {
+        ##     if (is(file, "RangedVcfStack")) {
+        ##         header <- scanVcfHeader(files(file)[[1]])
+        ##     } else {
+        ##         header <- scanVcfHeader(file)   ## FIXME: add the "scanVcfHeader,VcfStack".
+        ##     }
+        ##     geno <- rownames(geno(header))
+        ##     if (length(geno) == 1) {
+        ##         name <- geno
+        ##     } else {
+        ##         message('The Available values for "name" argument are: ',
+        ##                        paste(geno, collapse=" "), "\n",
+        ##                        "Please specify, otherwise, ",
+        ##                        'The default value of "GT" will be returned.', "\n")
+        ##         name <- "GT"
+        ##     }
+        ## }
+
