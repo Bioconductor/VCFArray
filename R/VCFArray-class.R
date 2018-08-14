@@ -76,13 +76,8 @@ setMethod("show", "VCFArraySeed", function(object)
             res <- readVcfStack(vcf, param = param)
             ans <- geno(res)[[x@name]]
         }
-        ## ans_dim <- dim(ans)
-        ## param <- ScanVcfParam(fixed = NA, info = NA, which = gr[gr$pos %in% ridx],
-        ##                       samples = colnames(x)[cidx])
-        ## res <- readVcf(vcf, x@name, param = param)
-        ## ans <- res
     }
-    ans
+    extract_array(ans, index)  ## FIXME. BUG report to DelayedArray. 
 }
 
 setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)

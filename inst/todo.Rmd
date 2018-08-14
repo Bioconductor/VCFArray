@@ -39,6 +39,7 @@ traceback()
 - only takes in `RangedVcfStack` object, because it has the rowRanges() available, which is required for the `VCFArraySeed` constructor. -- done!
 
 6. **BUG**: show method for >2 dimensional array. 
+   bug report: https://github.com/Bioconductor/DelayedArray/issues/25
 ```{r}
 rgstack
 seed <- VCFArraySeed(rgstack, name="SB")
