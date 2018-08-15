@@ -44,7 +44,16 @@ test_that("VCFArraySeed constructor works", {
 
     ## Fixed / info
     seed <- VCFArraySeed(fl, name = "LDAF")
-    
+    expect_equal(dim(seed), 10376L)
+
+    seed <- VCFArraySeed(fl, name = "AVGPOST")
+
+    ## for (i in seq_along(infos)) {
+    ##     seed <- VCFArraySeed(fl, name = infos[i])
+    ##     va <- VCFArray(seed)
+    ##     print(va)
+    ## }
+
     ## 3-dim array
     seed <- VCFArraySeed(rgstack, name = "SB")
     va <- VCFArray(seed)
@@ -62,6 +71,8 @@ test_that("VCFArray constructor works", {
     VAsubset <- VA[1:12, ]  ## simple operation degrades "VCFMatrix" into "DelayedMatrix". 
     expect_s4_class(VAsubset, "DelayedMatrix")
 
-    
+    va <- VCFArray(fl, name = "LDAF")
+    expect_s4_class(va, "VCFArray")
+    expect_equal(dim(va), 10376L)
 
 })

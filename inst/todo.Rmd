@@ -57,15 +57,39 @@ Could directly extract the "Type" from vcf header. But how to generate the Float
 different data type within VcfFile and R?? 
 
 
-7. How about the other data inside VCF? 
+8. How about the other data inside VCF? 
 - rowData(): REF,ALT, QUAL, FILTER, paramRangeID?
 - info(AC, AF, AN, DB, DP, FS, QD, ...)
+- IntegerList? 
 
-1) header(fl/VcfFile)
-2) name %in% rownames(info(header)), 
-	readVcf(vcffile(seed), param = ScanVcfParam(info = name, fixed = NA, geno = NA, which = ...))
-3) name %in% names(fixed(header))
-	readVcf(vcffile(seed), param = ScanVcfparam(fixed = name, info = NA, geno = NA, which = ...))
+```{r}
+fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+vcf <- VcfFile(fl)
+hdr <- scanVcfHeader(fl)
+
+param <- ScanVcfParam(fixed=NA, info="CIEND", geno=NA)
+res <- readVcf(vcf, genome="hg19", param=param)
+info(res)  ## IntegerList
+
+param0 <- ScanVcfParam(fixed=NA, info=NA, geno=NA)
+vcfbasic <- readVcf(vcf, genome="hg19", param=param0)
+
+vcfWhich(param) <- granges(rowRanges(vcfbasic)[c(1:4, 10373:10376)])
+res <- readVcf(vcf, genome="hg19", param=param)
+## does not return any info() column...
+## for "IntegerList" columns of info(vcf), if vcfWhich != NA, will FAIL!
+
+vcfInfo(param) <- "LDAF"
+res <- readVcf(vcf, genome="hg19", param=param)
+
+seed <- VCFArraySeed(fl, name="CIEND")
+dim(seed)
+## [1] 10376
+VCFArray(seed)  ## ERROR
+
+seed <- VCFArraySeed(fl, name="CIPOS")
+VCFArray(seed)  ## ERROR
+```
 
 
 Martin: 

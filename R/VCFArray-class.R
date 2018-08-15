@@ -48,10 +48,36 @@ setMethod("show", "VCFArraySeed", function(object)
     }
 })
 
-.get_VCFArraySeed_type <- function(seed, pfix)
+.get_VCFArraySeed_type <- function(seed, pfix, name)
 {
-    tp <- eval(parse(text = pfix))(seed@vcfheader)[seed@name, "Type"]  ## FIXME: geno/info/fixed
+    tp <- eval(parse(text = pfix))(seed@vcfheader)[name, "Type"]  ## FIXME: geno/info/fixed
     tp <- sub("Integer|Float", "integer", sub("String", "character", tp))  ## convert into R type
+    tp
+}
+
+.get_VCFArraySeed_basic_param <- function(seed, pfix, name)
+{
+    if (pfix == "geno") {
+        param <- ScanVcfParam(fixed = NA, info = NA)
+    } else if (pfix == "fixed") {
+        param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
+    } else if (pfix == "info") {
+        param <- ScanVcfParam(fixed = NA, info = name, geno = NA)
+    }
+    param
+}
+.readVcf_for_class <- function(vcf, param, pfix)
+{
+    if(is(vcf, "VcfFile")) {
+        res <- readVcf(vcf, genome = "hg19", param = param)
+    } else if (is(vcf, "RangedVcfStack")) {
+        res <- readVcfStack(vcf, param = param)
+    }
+    res <- eval(parse(text = pfix))(res)
+    if (is(res, "DataFrame")){   ## FIXME: for some "IntegerList" columns from info(), fails for dim. 
+        res <- res[[1]]
+    }
+    res
 }
 
 #' @import GenomicRanges
@@ -63,7 +89,7 @@ setMethod("show", "VCFArraySeed", function(object)
     name <- sub(".*/", "", x@name)
 
     if (any(ans_dim == 0L)){
-        tp <- .get_VCFArraySeed_type(x, pfix)
+        tp <- .get_VCFArraySeed_type(x, pfix, name)
         ans <- eval(parse(text = tp))(0)  ## return integer(0) / character(0)
         dim(ans) <- ans_dim
     } else {
@@ -74,27 +100,20 @@ setMethod("show", "VCFArraySeed", function(object)
         }
         gr <- x@gr
 
-        if (pfix == "geno") {
-            param <- ScanVcfParam(fixed = NA, info = NA)
-        } else if (pfix == "fixed") {
-            param <- ScanVcfParam(fixed = name, info = NA)
-        } else if (pfix == "info") {
-            param <- ScanVcfParam(fixed = NA, info = name)
-        }
-        vcfWhich(param) <- gr[gr$pos %in% ridx]
-        vcfSamples(param) <- colnames(x)[cidx]
-
-        if(is(vcf, "VcfFile")) {
-            res <- readVcf(vcf, x@name, param = param)
-        } else if (is(vcf, "RangedVcfStack")) {
-            res <- readVcfStack(vcf, param = param)
+        ## set basic params
+        param <- .get_VCFArraySeed_basic_param(x, pfix, name)
+        vcfWhich(param) <- gr[gr$pos %in% index[[1]] ]
+        if (pfix == "geno" && length(ans_dim) > 1) {
+            vcfSamples(param) <- colnames(x)[ index[[2]] ]
         }
 
-        ans <- eval(parse(text = pfix))(res)
-        if (is(ans, "DataFrame")){
-            ans <- ans[[1]]
-       }
-        if (length(ans_dim) > 2) {
+        ## read array data from VcfFile/RangedVCfStack object.
+        ans <- .readVcf_for_class(vcf, param, pfix)
+
+        ## final touch to return array (1D) / to subset >2D arrays.
+        if (length(ans_dim) == 1) {
+            dim(ans) <- ans_dim
+        } else if (length(ans_dim) > 2) {
             index.ext <- c(vector("list", 2), index[-c(1:2)])
             ans <- extract_array(ans, index.ext)
         }
@@ -192,11 +211,12 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     ## dimnames <- list(names(gr), samples(header))
 
     if (pfix == "geno") {
+        dim <- c(dims, nsamps)
+        dimnames <- c(dimnames, samples(header))
         extradim <- as.integer(geno(header)[name, "Number"]) ## FIXME: geno()/info()/fixed()
         if (!is.na(extradim) && extradim != 1) {
-
-            dims <- c(nvars, nsamps, extradim)
-        dimnames[[3]] <- as.character(seq_len(extradim))
+            dims <- c(dims, extradim)
+            dimnames[[3]] <- c(dimnames, list(as.character(seq_len(extradim))))
         }
     }
     
