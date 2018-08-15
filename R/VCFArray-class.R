@@ -48,6 +48,12 @@ setMethod("show", "VCFArraySeed", function(object)
     }
 })
 
+.get_VCFArraySeed_type <- function(seed, pfix)
+{
+    tp <- eval(parse(text = pfix))(seed@vcfheader)[seed@name, "Type"]  ## FIXME: geno/info/fixed
+    tp <- sub("Integer|Float", "integer", sub("String", "character", tp))  ## convert into R type
+}
+
 #' @import GenomicRanges
 .extract_array_from_VCFArray <- function(x, index)
 {
@@ -55,45 +61,45 @@ setMethod("show", "VCFArraySeed", function(object)
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
     pfix <- sub("/.*", "", x@name)
     name <- sub(".*/", "", x@name)
-    tp <- eval(parse(text = pfix))(x@vcfheader)[name, "Type"]
-    ## tp <- geno(x@vcfheader)[x@name, "Type"]  ## extract the "type" from seed@vcfheader.
-    tp <- sub("Integer", "integer", sub("String", "character", sub("Float", "integer", tp)))
+
     if (any(ans_dim == 0L)){
+        tp <- .get_VCFArraySeed_type(x, pfix)
         ans <- eval(parse(text = tp))(0)  ## return integer(0) / character(0)
         dim(ans) <- ans_dim
     } else {
         vcf <- vcffile(x)
-        ridx <- index[[1]]
-        if(is.null(ridx))
-            ridx <- seq_len(nrow(x))
-        cidx <- index[[2]]
-        if(is.null(cidx))
-            cidx <- seq_len(ncol(x))
-        gr <- x@gr
-        if (pfix == "geno") {
-            param <- ScanVcfParam(fixed = NA, info = NA,
-                                  which = gr[gr$pos %in% ridx],
-                                  samples = colnames(x)[cidx])
-        } else if (pfix == "fixed") {
-            param <- ScanVcfParam(fixed = name, info = NA,
-                                  which = gr[gr$pos %in% ridx],
-                                  samples = colnames(x)[cidx])
-        } else if (pfix == "info") {
-            param <- ScanVcfParam(fixed = NA, info = name,
-                                  which = gr[gr$pos %in% ridx],
-                                  samples = colnames(x)[cidx])
+        for(i in seq_along(index)) {
+            if(is.null(index[[i]]))
+                index[[i]] <- seq_len(ans_dim[i])
         }
+        gr <- x@gr
+
+        if (pfix == "geno") {
+            param <- ScanVcfParam(fixed = NA, info = NA)
+        } else if (pfix == "fixed") {
+            param <- ScanVcfParam(fixed = name, info = NA)
+        } else if (pfix == "info") {
+            param <- ScanVcfParam(fixed = NA, info = name)
+        }
+        vcfWhich(param) <- gr[gr$pos %in% ridx]
+        vcfSamples(param) <- colnames(x)[cidx]
+
         if(is(vcf, "VcfFile")) {
             res <- readVcf(vcf, x@name, param = param)
-            ## ans <- res
         } else if (is(vcf, "RangedVcfStack")) {
             res <- readVcfStack(vcf, param = param)
-            ## ans <- geno(res)[[x@name]]
         }
+
         ans <- eval(parse(text = pfix))(res)
         if (is(ans, "DataFrame")){
             ans <- ans[[1]]
        }
+        if (length(ans_dim) > 2) {
+            index.ext <- c(vector("list", 2), index[-c(1:2)])
+            ans <- extract_array(ans, index.ext)
+        }
+    }
+    ans
 }
 
 setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
@@ -182,12 +188,14 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     nvars <- length(gr)
     nsamps <- length(samples(header))
     dims <- nvars
-    dimnames <- list(names(gr), samples(header))
+    dimnames <- list(names(gr))
+    ## dimnames <- list(names(gr), samples(header))
 
     if (pfix == "geno") {
         extradim <- as.integer(geno(header)[name, "Number"]) ## FIXME: geno()/info()/fixed()
-        if (extradim != 1) {
-        dims <- c(nvars, nsamps, extradim)
+        if (!is.na(extradim) && extradim != 1) {
+
+            dims <- c(nvars, nsamps, extradim)
         dimnames[[3]] <- as.character(seq_len(extradim))
         }
     }

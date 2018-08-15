@@ -34,12 +34,11 @@ traceback()
 - extract the possible 3rd dimension of `VCFArraySeed` and save as @dim slot. -- done!
   
 5. VCFArraySeed(file = "VCFStack")
-- Check ?readVcfStack: lapply to each individual VCFFile and then rbind the VCF files. 
 - use readVCFStack(param = ) in VCFArraySeed() constructor.   -- done!
 - only takes in `RangedVcfStack` object, because it has the rowRanges() available, which is required for the `VCFArraySeed` constructor. -- done!
 
-6. **BUG**: show method for >2 dimensional array. 
-   bug report: https://github.com/Bioconductor/DelayedArray/issues/25
+6. **BUG**: show method for >2 dimensional array.  -- fixed in DelayedArray 0.7.28. 
+   bug report: https://github.com/Bioconductor/DelayedArray/issues/25   
 ```{r}
 rgstack
 seed <- VCFArraySeed(rgstack, name="SB")
@@ -49,6 +48,14 @@ index <- list(seq(to=nrow(seed), length.out=2), NULL, NULL)
 extract_array(seed, index)
 VCFArray(seed)  ## ERROR
 ```
+
+7. type of returned data. 
+```
+<10376 x 5> VCFMatrix object of type "Float":
+```
+Could directly extract the "Type" from vcf header. But how to generate the Float(0)/String(0) in R?
+different data type within VcfFile and R?? 
+
 
 7. How about the other data inside VCF? 
 - rowData(): REF,ALT, QUAL, FILTER, paramRangeID?

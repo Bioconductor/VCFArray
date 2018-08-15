@@ -45,11 +45,13 @@ test_that("VCFArraySeed constructor works", {
     ## Fixed / info
     seed <- VCFArraySeed(fl, name = "LDAF")
     
-    ## VCFArray constructor... to be moved...
+    ## 3-dim array
+    seed <- VCFArraySeed(rgstack, name = "SB")
     va <- VCFArray(seed)
-    expect_identical(dim(va), c(1000L, 3L))
+    expect_identical(dim(va), c(1000L, 3L, 4L))
     
-    va <- VCFArray(rgstack, name = "SB")
+    va1 <- VCFArray(rgstack, name = "SB")
+    expect_identical(va, va1)
 })
 
 test_that("VCFArray constructor works", {
