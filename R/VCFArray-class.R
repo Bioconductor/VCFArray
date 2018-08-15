@@ -48,27 +48,29 @@ setMethod("show", "VCFArraySeed", function(object)
     }
 })
 
+.get_VCFArraySeed_type <- function(seed)
+{
+    tp <- geno(seed@vcfheader)[seed@name, "Type"]  ## FIXME: geno/info/fixed
+    tp <- sub("Integer|Float", "integer", sub("String", "character", tp))  ## convert into R type
+}
+
 #' @import GenomicRanges
 .extract_array_from_VCFArray <- function(x, index)
 {
-    ## browser()
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
-    tp <- geno(x@vcfheader)[x@name, "Type"]  ## extract the "type" from seed@vcfheader.
-    tp <- sub("Integer", "integer", sub("String", "character", tp))
     if (any(ans_dim == 0L)){
+        tp <- .get_VCFArraySeed_type(x)
         ans <- eval(parse(text = tp))(0)  ## return integer(0) / character(0)
         dim(ans) <- ans_dim
     } else {
         vcf <- vcffile(x)
-        ridx <- index[[1]]
-        if(is.null(ridx))
-            ridx <- seq_len(nrow(x))
-        cidx <- index[[2]]
-        if(is.null(cidx))
-            cidx <- seq_len(ncol(x))
+        for(i in seq_along(index)) {
+            if(is.null(index[[i]]))
+                index[[i]] <- seq_len(ans_dim[i])
+        }
         gr <- x@gr
-        param <- ScanVcfParam(which = gr[gr$pos %in% ridx],
-                              samples = colnames(x)[cidx])
+        param <- ScanVcfParam(which = gr[gr$pos %in% index[[1]] ],
+                              samples = colnames(x)[ index[[2]] ])
         if(is(vcf, "VcfFile")) {
             res <- readGeno(vcf, x@name, param = param)
             ans <- res
@@ -76,8 +78,12 @@ setMethod("show", "VCFArraySeed", function(object)
             res <- readVcfStack(vcf, param = param)
             ans <- geno(res)[[x@name]]
         }
+        if (length(ans_dim) > 2) {
+            index.ext <- c(vector("list", 2), index[-c(1:2)])
+            ans <- extract_array(ans, index.ext)
+        }
     }
-    extract_array(ans, index)  ## FIXME. BUG report to DelayedArray. 
+    ans
 }
 
 setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
@@ -156,7 +162,7 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     nvars <- length(gr)
 
     dimnames <- list(names(gr), samples(header))
-    if (extradim != 1) {
+    if (!is.na(extradim) && extradim != 1) {
         dims <- c(nvars, nsamps, extradim)
         dimnames[[3]] <- as.character(seq_len(extradim))
     } else {

@@ -42,11 +42,16 @@ test_that("VCFArraySeed constructor works", {
     suppressMessages(seed <- VCFArraySeed(rgstack))
     expect_equal(seed@name, "GT")
 
+    seed <- VCFArraySeed(rgstack, name = "SB")
+    va <- VCFArray(seed)
+    ## check dimensions here. 
+
     ## VCFArray constructor... to be moved...
     va <- VCFArray(seed)
-    expect_identical(dim(va), c(1000L, 3L))
+    expect_identical(dim(va), c(1000L, 3L, 4L))
     
-    va <- VCFArray(rgstack, name = "SB")
+    va1 <- VCFArray(rgstack, name = "SB")
+    expect_identical(va, va1)
 })
 
 test_that("VCFArray constructor works", {
