@@ -66,15 +66,17 @@ setMethod("show", "VCFArraySeed", function(object)
     }
     param
 }
-.readVcf_for_class <- function(vcf, param, pfix)
+.readVcf_for_class <- function(vcf, param, pfix, name)
 {
     if(is(vcf, "VcfFile")) {
         res <- readVcf(vcf, genome = "hg19", param = param)
     } else if (is(vcf, "RangedVcfStack")) {
         res <- readVcfStack(vcf, param = param)
     }
-    res <- eval(parse(text = pfix))(res)
-    if (is(res, "DataFrame")){   ## FIXME: for some "IntegerList" columns from info(), fails for dim. 
+    res <- eval(parse(text = pfix))(res)[[name]]
+    if (is(res, "DataFrame")){   ## FIXME: for some "IntegerList"
+                                 ## columns from info(), fails for
+                                 ## dim.
         res <- res[[1]]
     }
     res
@@ -83,7 +85,7 @@ setMethod("show", "VCFArraySeed", function(object)
 #' @import GenomicRanges
 .extract_array_from_VCFArray <- function(x, index)
 {
-    browser()
+    ## browser()
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
     pfix <- sub("/.*", "", x@name)
     name <- sub(".*/", "", x@name)
@@ -108,7 +110,7 @@ setMethod("show", "VCFArraySeed", function(object)
         }
 
         ## read array data from VcfFile/RangedVCfStack object.
-        ans <- .readVcf_for_class(vcf, param, pfix)
+        ans <- .readVcf_for_class(vcf, param, pfix, name)
 
         ## final touch to return array (1D) / to subset >2D arrays.
         if (length(ans_dim) == 1) {
@@ -132,15 +134,6 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 
 VCFArraySeed <- function(file = character(), index = character(), name = character())
 {
-    ## if (!isSingleString(file))
-    ##     stop(wmsg(
-    ##         "'file' must be a single string specifying the path to ",
-    ##         "the vcf file where the assay data is located."))
-    ## if (!isSingleString(name))
-    ##     stop(wmsg("'name' must be a single string specifying the name of ",
-    ##               "the assay data corresponding to the vcf 'FORMAT' field."))
-
-    ## browser()
     if (is(file, "VcfFile")) {
         vcf <- file
         if (!is.na(index(vcf)) && length(index)) {
@@ -179,15 +172,6 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     ## check "name" argument
     if (missing(name) || !name %in% c(fixed, info, geno))
         stop(msg, "Please specify corectly!")
-    ## if (missing(name) && length(geno) == 1) {
-    ##     name <- geno
-    ## } else if (missing(name)) {
-    ##     message(msg, "Please specify, otherwise, ",
-    ##             'The default value of "GT" will be returned.', "\n")
-    ##     name <- "GT"
-    ## } else if (!name %in% geno) {
-    ##     stop(msg, "Please specify correctly!")
-    ## }
     
     ## lightweight filter. Only return REF, rowRanges
     if (is(vcf, "RangedVcfStack")) {
@@ -201,22 +185,24 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     gr$pos <- seq_along(gr)
 
     ## check the category of geno/info/fixed
-    pfix <- ifelse(name %in% geno, "geno", ifelse(name %in% fixed, "fixed", ifelse(name %in% info, "info", NULL)))
+    pfix <- ifelse(name %in% geno, "geno",
+            ifelse(name %in% fixed, "fixed",
+            ifelse(name %in% info, "info", NULL)))
     
     ## dims
     nvars <- length(gr)
     nsamps <- length(samples(header))
     dims <- nvars
     dimnames <- list(names(gr))
-    ## dimnames <- list(names(gr), samples(header))
 
     if (pfix == "geno") {
-        dim <- c(dims, nsamps)
-        dimnames <- c(dimnames, samples(header))
-        extradim <- as.integer(geno(header)[name, "Number"]) ## FIXME: geno()/info()/fixed()
+        dims[2] <- nsamps
+        dimnames[[2]] <- samples(header)
+        extradim <- as.integer(geno(header)[name, "Number"]) ## FIXME:
+                                                             ## geno()/info()/fixed()
         if (!is.na(extradim) && extradim != 1) {
             dims <- c(dims, extradim)
-            dimnames[[3]] <- c(dimnames, list(as.character(seq_len(extradim))))
+            dimnames <- c(dimnames, list(as.character(seq_len(extradim))))
         }
     }
     
@@ -229,7 +215,6 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
 ### -------------------
 ### VCFArray class
 ### -------------------
-## ' @importClassesFrom DelayedArray DelayedArray DelayedMatrix
 setClass("VCFArray", contains = "DelayedArray")
 setClass("VCFMatrix", contains=c("DelayedMatrix", "VCFArray"))
 setMethod("matrixClass", "VCFArray", function(x) "VCFMatrix")
@@ -289,22 +274,3 @@ VCFArray <- function(file = character(), index = character(), name=NA)
 ##     ## seed <- VCFArraySeed(fl, "GL")
 ##     VCFArray(seed)
 ## })
-
-        ## if (is.na(name)) {
-        ##     if (is(file, "RangedVcfStack")) {
-        ##         header <- scanVcfHeader(files(file)[[1]])
-        ##     } else {
-        ##         header <- scanVcfHeader(file)   ## FIXME: add the "scanVcfHeader,VcfStack".
-        ##     }
-        ##     geno <- rownames(geno(header))
-        ##     if (length(geno) == 1) {
-        ##         name <- geno
-        ##     } else {
-        ##         message('The Available values for "name" argument are: ',
-        ##                        paste(geno, collapse=" "), "\n",
-        ##                        "Please specify, otherwise, ",
-        ##                        'The default value of "GT" will be returned.', "\n")
-        ##         name <- "GT"
-        ##     }
-        ## }
-

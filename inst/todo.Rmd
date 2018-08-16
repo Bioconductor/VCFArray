@@ -60,7 +60,8 @@ different data type within VcfFile and R??
 8. How about the other data inside VCF? 
 - rowData(): REF,ALT, QUAL, FILTER, paramRangeID?
 - info(AC, AF, AN, DB, DP, FS, QD, ...)
-- IntegerList? 
+- IntegerList? (info: CIEND...)
+- DNAStringSet (fixed: REF)
 
 ```{r}
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
