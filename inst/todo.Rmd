@@ -47,19 +47,37 @@ extract_array(seed, index)
 index <- list(seq(to=nrow(seed), length.out=2), NULL, NULL)
 extract_array(seed, index)
 VCFArray(seed)  ## ERROR
+
+### summary: all geno() entries tested and work for rgstack.
+### all info() entries tested and work for fl/vcf, except the number>1 entries. 
+
+VCFArray(rgstack, name = "FILTER")
+## Error in as.vector(x, mode = "character") : 
+##   no method for coercing this S4 class to a vector
+VCFArray(rgstack, name = "AC")
+## <1000> VCFArray object of type "integer":
+## Error in map_x_colnames_to_object_colnames(colnames(object)) : 
+##   the DataFrame objects to rbind must have the same number of columns
 ```
 
-7. type of returned data. 
+7. type of returned data.    -- done
 ```
 <10376 x 5> VCFMatrix object of type "Float":
 ```
 Could directly extract the "Type" from vcf header. But how to generate the Float(0)/String(0) in R?
 different data type within VcfFile and R?? 
 
+**VCF**    **R type**
+Integer    integer
+Float      numeric
+String     character
+
+
 
 8. How about the other data inside VCF? 
+- todo: use array(DNAStringSetList/IntegerList/CharacterList) to construct DelayedArray objects. 
 - rowData(): REF,ALT, QUAL, FILTER, paramRangeID?
-- info(AC, AF, AN, DB, DP, FS, QD, ...)
+- info(AC, AF, AN, DB, DP, FS, QD, ...)   
 - IntegerList? (info: CIEND...)
 - DNAStringSet (fixed: REF)
 
@@ -68,9 +86,20 @@ fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
 vcf <- VcfFile(fl)
 hdr <- scanVcfHeader(fl)
 
+param <- ScanVcfParam(fixed="ALT", info=NA, geno=NA)
+res <- readVcf(vcf, genome="hg19", param=param)
+ans <- fixed(res)[["ALT"]]  ## DNAStringSetList -- 
+
 param <- ScanVcfParam(fixed=NA, info="CIEND", geno=NA)
 res <- readVcf(vcf, genome="hg19", param=param)
-info(res)  ## IntegerList
+ans <- info(res)[[1]]  ## IntegerList -- DelayedArray( array(IntegerList) )
+
+param <- ScanVcfParam(fixed=NA, info="HOMLEN", geno=NA)
+res <- readVcf(vcf, genome="hg19", param=param)
+ans <- info(res)[[1]]  ## IntegerList
+
+param <- ScanVcfParam(fixed=NA, info=NA)
+res <- readVcfStack(rgstack, param=param)
 
 param0 <- ScanVcfParam(fixed=NA, info=NA, geno=NA)
 vcfbasic <- readVcf(vcf, genome="hg19", param=param0)

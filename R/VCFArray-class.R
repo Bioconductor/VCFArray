@@ -51,7 +51,8 @@ setMethod("show", "VCFArraySeed", function(object)
 .get_VCFArraySeed_type <- function(seed, pfix, name)
 {
     tp <- eval(parse(text = pfix))(seed@vcfheader)[name, "Type"]  ## FIXME: geno/info/fixed
-    tp <- sub("Integer|Float", "integer", sub("String", "character", tp))  ## convert into R type
+    map <- c(Integer = "integer", String = "character", Float = "numeric")
+    tp <- map[tp]
     tp
 }
 
