@@ -3,15 +3,14 @@ test_that("VCFArraySeed constructor works", {
     ## singleString input
     fl <- system.file("extdata", "chr22.vcf.gz",
                       package="VariantAnnotation")
+    vcf <- VcfFile(fl)
     seed <- VCFArraySeed(fl, name = "GT")
     expect_s4_class(seed, "VCFArraySeed")
-    
-    ## "VcfFile" input
-    vcf <- VcfFile(fl)
-    seed <- VCFArraySeed(vcf, name="DS")
-    expect_true(validObject(seed))
-    ## expect_equal(VCFArraySeed(fl, name="DS"), seed)
-    
+
+    ##----------------
+    ## VcfFile / character
+    ##----------------
+
     ## input is "VcfFile" with index file, and the "index" argument is
     ## not NULL.
     expect_error(VCFArraySeed(vcf, index=index(vcf), name="DS"))
@@ -26,21 +25,16 @@ test_that("VCFArraySeed constructor works", {
     expect_true(validObject(seed))
     expect_equal(index(vcffile(seed)), index)
 
-    ## "RangedVcfStack" input
-    rgstackFile <- system.file("extdata", "rgstack.rda", package = "VCFArray")
-    rgstack <- readRDS(rgstackFile)
-    
     ## geno()
-    seed <- VCFArraySeed(rgstack, name = "GT")  ## success
+    seed <- VCFArraySeed(fl, name = "GT")
     expect_true(validObject(seed))
-    expect_identical(dim(seed), c(1000L, 3L))
+    expect_identical(dim(seed), c(10376L, 5L))
 
-    seed1 <- VCFArraySeed(rgstack, name = "gt")
-    expect_identical(seed, seed1)
+    ## seed1 <- VCFArraySeed(fl, name = "gt")
+    ## expect_equal(seed, seed1)
 
-    expect_error(VCFArraySeed(rgstack, name = "any"))
-    expect_error(seed <- VCFArraySeed(rgstack))
-    
+    expect_error(VCFArraySeed(fl, name = "any"))
+    expect_error(seed <- VCFArraySeed(fl))
     
     ## info()
     seed <- VCFArraySeed(fl, name = "LDAF")
@@ -50,6 +44,40 @@ test_that("VCFArraySeed constructor works", {
     seed <- VCFArraySeed(fl, name = "REF")
     expect_equal(dim(seed), 10376L)
     
+    ##----------------
+    ## RangedVcfStack
+    ##----------------
+
+    rgstackFile <- system.file("extdata", "rgstack.rda", package = "VCFArray")
+    rgstack <- readRDS(rgstackFile)
+
+    ## geno()
+    seed <- VCFArraySeed(rgstack, name = "GT")  ## success
+    expect_identical(dim(seed), c(1000L, 3L))
+
+    seed <- VCFArraySeed(rgstack, name = "AD")  ## warning... 
+
+    hdr <- scanVcfHeader(files(rgstack)[[1]])
+
+    ## fixed: REF, ALT, FILTER, QUAL,
+    ## info: AC, all
+    ## geno: all
+    ## infos <- rownames(info(hdr))
+    ## for (i in seq_along(infos)) {
+    ##     seed <- VCFArraySeed(rgstack, name = infos[i])
+    ##     va <- VCFArray(seed)
+    ##     print(infos[i])
+    ##     print(va)
+    ## }
+
+    ## genos <- rownames(geno(hdr))
+    ## for (i in seq_along(genos)) {
+    ##     seed <- VCFArraySeed(rgstack, name = genos[i])
+    ##     va <- VCFArray(seed)
+    ##     print(genos[i])
+    ##     print(va)
+    ## }
+
     ## 3-dim array
     seed <- VCFArraySeed(rgstack, name = "SB")
     va <- VCFArray(seed)
@@ -67,7 +95,7 @@ test_that("VCFArray constructor works", {
     expect_s4_class(va, "VCFMatrix")
     vasubset <- va[1:12, ]  ## simple operation degrades "VCFMatrix"
                             ## into "DelayedMatrix".
-    expect_s4_class(VAsubset, "DelayedMatrix")
+    expect_s4_class(vasubset, "DelayedMatrix")
 
     va <- VCFArray(fl, name = "LDAF")
     expect_s4_class(va, "VCFArray")

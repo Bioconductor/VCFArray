@@ -101,9 +101,19 @@ ans <- array(ans@unlistData)  ## fixed.
 getClass("XStringSetList")
 getClass("XStringSet")
 
+rgfile <- system.file("extdata", "rgstack.rda", package="VCFArray")
+rgfile
+## [1] "/home/qian/Documents/Research/VCFArray/inst/extdata/rgstack.rda"
+rgstack <- readRDS(rgfile)
 readVcfStack(rgstack)  ## success
 readVcfStack(rgstack, param = ScanVcfParam(info = NA)) ## fails.
 readVcfStack(rgstack, param = ScanVcfParam(fixed = NA)) ## fails.
+
+rg <- rowRanges(rgstack)
+
+readVcfStack(rgstack,
+             i = rg,
+             j = 1:2)
 ```
 
 Martin: 

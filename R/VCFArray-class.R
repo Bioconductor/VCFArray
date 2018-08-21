@@ -145,6 +145,7 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 
 VCFArraySeed <- function(file = character(), index = character(), name = character())
 {
+    ## browser()
     if (is(file, "VcfFile")) {
         vcf <- file
         if (!is.na(index(vcf)) && length(index)) {
@@ -181,9 +182,9 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
                sep = "")
 
     ## check "name" argument (case insensitive)
-    name <- toupper(name)
     if (missing(name) || !name %in% c(fixed, info, geno))
         stop(msg, "Please specify corectly!")
+    ## name <- toupper(name)
     
     ## lightweight filter. Only return REF, rowRanges
     if (is(vcf, "RangedVcfStack")) {
