@@ -70,8 +70,15 @@ different data type within VcfFile and R??
 **VCF**    **R type**
 Integer    integer
 Float      numeric
+Flag       character
 String     character
+Character  character
 
+- "Number" special cases: 
+A: The field has one value per alternate allele. 
+R: The field has one value for each possible allele, including the reference.
+G: The field has one value for each possible genotype. 
+. (dot): The number of possible values varies, is unknown or unbounded. (list)
 
 
 8. How about the other data inside VCF? 
@@ -120,6 +127,37 @@ VCFArray(seed)  ## ERROR
 seed <- VCFArraySeed(fl, name="CIPOS")
 VCFArray(seed)  ## ERROR
 ```
+
+```{r}
+fl <- system.file("extdata", "chr22.vcf.gz",
+                  package="VariantAnnotation")
+hdr <- scanVcfHeader(fl)
+vcfinfo <- as.data.frame(info(hdr)[,1:2])
+infos <- rownames(vcfinfo)
+param0 <- ScanVcfParam(fixed=NA, info=NA, geno = NA)
+vcf0 <- readVcf(fl, genome="hg19", param = param0)
+rg <- rowRanges(vcf0)
+rgsubset <- rg[c(1:4, seq(to=length(rg), length.out=4))]
+
+## with vcfWhich(), info(CIEND, CIPOS, END, HOMLEN, HOMSEQ, SVLEN, SVTYPE) does not return anything.
+param <- ScanVcfParam(fixed=NA, info="CIEND", geno = NA, which = rgsubset)
+res <- readVcf(fl, genome="hg19", param = param)
+info(res)
+DelayedArray(array(info(res)[[1]]))
+
+## without vcfWhich(), info(CIEND, CIPOS, END, HOMLEN, HOMSEQ, SVLEN, SVTYPE) could return results we want. 
+param1 <- ScanVcfParam(fixed=NA, info="SVTYPE", geno = NA)
+res <- readVcf(fl, genome="hg19", param = param1)
+info(res)
+
+## with vcfWhich(), info:ELSE... could return successfully.
+param <- ScanVcfParam(fixed=NA, info="LDAF", geno = NA, which = rgsubset)
+res <- readVcf(fl, genome="hg19", param = param)
+info(res)
+
+```
+
+
 
 
 Martin: 

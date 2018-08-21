@@ -49,8 +49,9 @@ test_that("VCFArraySeed constructor works", {
     seed <- VCFArraySeed(fl, name = "LDAF")
     expect_equal(dim(seed), 10376L)  
 
-    seed <- VCFArraySeed(fl, name = "AVGPOST")
-
+    seed <- VCFArraySeed(fl, name = "CIEND")
+    
+    
     vcfinfo <- as.data.frame(info(seed@vcfheader)[,1:2])
     infos <- rownames(vcfinfo)
     for (i in seq_along(infos)) {
@@ -58,9 +59,10 @@ test_that("VCFArraySeed constructor works", {
         va <- VCFArray(seed)
         print(va)
     }
-
+    ## try i=6,7,8,9,10,13,22
+    
     ## 3-dim array
-    seed <- VCFArraySeed(rgstack, name = "SB")
+    seed <- VCFArraySeed(rgcstack, name = "SB")
     va <- VCFArray(seed)
     expect_identical(dim(va), c(1000L, 3L, 4L))
     

@@ -51,7 +51,8 @@ setMethod("show", "VCFArraySeed", function(object)
 .get_VCFArraySeed_type <- function(seed, pfix, name)
 {
     tp <- eval(parse(text = pfix))(seed@vcfheader)[name, "Type"]  ## FIXME: geno/info/fixed
-    map <- c(Integer = "integer", String = "character", Float = "numeric")
+    map <- c(Integer = "integer",  Float = "numeric", Flag = "character",
+             String = "character", Character = "character")
     tp <- map[tp]
     tp
 }
@@ -59,7 +60,7 @@ setMethod("show", "VCFArraySeed", function(object)
 .get_VCFArraySeed_basic_param <- function(seed, pfix, name)
 {
     if (pfix == "geno") {
-        param <- ScanVcfParam(fixed = NA, info = NA)
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = name)
     } else if (pfix == "fixed") {
         param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
     } else if (pfix == "info") {
@@ -79,6 +80,8 @@ setMethod("show", "VCFArraySeed", function(object)
                                  ## columns from info(), fails for
                                  ## dim.
         res <- res[[1]]
+        if (is(res, "list_OR_List"))
+            res <- array(res)
     }
     res
 }
@@ -168,9 +171,9 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
                "info(", length(info), "): ", paste(info, collapse = " "), "\n",
                "geno(", length(geno), "): ", paste(geno, collapse = " "), "\n",
                sep = "")
-                  ## paste(geno, collapse=" "), "\n")
 
-    ## check "name" argument
+    ## check "name" argument (case insensitive)
+    name <- toupper(name)
     if (missing(name) || !name %in% c(fixed, info, geno))
         stop(msg, "Please specify corectly!")
     
