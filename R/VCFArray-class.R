@@ -48,9 +48,16 @@ setMethod("show", "VCFArraySeed", function(object)
     }
 })
 
+## For generating an R null object of type ... in VCF. 
 .get_VCFArraySeed_type <- function(seed, pfix, name)
 {
-    tp <- eval(parse(text = pfix))(seed@vcfheader)[name, "Type"]  ## FIXME: geno/info/fixed
+    if (pfix %in% c("info", "geno")) {
+        tp <- eval(parse(text = pfix))(seed@vcfheader)[name, "Type"] 
+    } else if (name %in% c("REF", "ALT", "FILTER")) {
+        tp <- "Character"
+    } else if (name == "QUAL") {
+        tp <- "Float"
+    }
     map <- c(Integer = "integer",  Float = "numeric", Flag = "character",
              String = "character", Character = "character")
     tp <- map[tp]
@@ -61,10 +68,12 @@ setMethod("show", "VCFArraySeed", function(object)
 {
     if (pfix == "geno") {
         param <- ScanVcfParam(fixed = NA, info = NA, geno = name)
-    } else if (pfix == "fixed") {
-        param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
     } else if (pfix == "info") {
         param <- ScanVcfParam(fixed = NA, info = name, geno = NA)
+    } else if (pfix == "fixed" && name == "REF") {
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
+    } else if (pfix == "fixed") {
+            param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
     }
     param
 }
@@ -76,7 +85,9 @@ setMethod("show", "VCFArraySeed", function(object)
         res <- readVcfStack(vcf, param = param)
     }
     res <- eval(parse(text = pfix))(res)[[name]]
-    if (is(res, "list_OR_List")) {
+    if(is(res, "XStringSetList")) {
+        res <- array(res@unlistData)
+    }else if (is(res, "list_OR_List")) {
         res <- array(res)
     }
     res
@@ -160,7 +171,8 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
         header <- scanVcfHeader(vcf)   ## FIXME: add the "scanVcfHeader,VcfStack".
     }
     geno <- rownames(geno(header))
-    fixed <- names(fixed(header))
+    ## fixed <- names(fixed(header))
+    fixed <- c("REF", "ALT", "QUAL", "FILTER")
     info <- rownames(info(header))
     msg <- paste('The Available values for "name" argument are: \n',
                "fixed(", length(fixed), "): ", paste(fixed, collapse = " "), "\n",

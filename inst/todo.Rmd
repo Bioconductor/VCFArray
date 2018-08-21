@@ -96,14 +96,15 @@ hdr <- scanVcfHeader(fl)
 param <- ScanVcfParam(fixed="ALT", info=NA, geno=NA)
 res <- readVcf(vcf, genome="hg19", param=param)
 ans <- fixed(res)[["ALT"]]  ## DNAStringSetList -- 
+ans <- array(ans@unlistData)  ## fixed. 
+
+getClass("XStringSetList")
+getClass("XStringSet")
 
 readVcfStack(rgstack)  ## success
 readVcfStack(rgstack, param = ScanVcfParam(info = NA)) ## fails.
 readVcfStack(rgstack, param = ScanVcfParam(fixed = NA)) ## fails.
 ```
-
-
-
 
 Martin: 
 
