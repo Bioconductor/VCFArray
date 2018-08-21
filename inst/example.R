@@ -8,22 +8,9 @@ options(error=recover)
 trace(extract_array, tracer = quote(str(index)), exit = quote(print(returnValue())))
 va
 
-
-VCFArray(seed)[1:12, ]  ## simple operation degrades "VCFMatrix" into "DelayedMatrix". 
-
-seed <- VCFArraySeed(fl, name = "DS")
-VCFArray(seed)
-seed <- VCFArraySeed(fl, name = "GL")
-VCFArray(seed)
-
 bg <- system.file("extdata", "CEU_Exon.vcf.bgz", package="SeqArray")
 VAseed <- VCFArraySeed(bg, name = "GT")
-VAseed
-dim(VAseed)
-vcffile(VAseed)
-DelayedArray(VAseed)
 VCFArray(VAseed)
-all.equal(VCFArray(VAseed), VCFArray(bg, name = "GT"))
 
 VAseed1 <- VCFArraySeed(bg, name = "DP")
 DelayedArray(VAseed1)
@@ -83,48 +70,3 @@ gt <- geno(rvs)[["GT"]]
 
 headers <- lapply(files(stack), scanVcfHeader)
 
-
-### -------------------------------
-## VcfStack as input
-### -------------------------------
-
-extdata <- system.file(package="GenomicFiles", "extdata")
-files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)
-names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
-
-## input data.frame describing the length of each sequence, coerce to
-## 'Seqinfo' object
-seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
-stack <- VcfStack(files, seqinfo)
-gr <- as(seqinfo(stack)[rownames(stack)], "GRanges")
-rgstack <- RangedVcfStack(stack, rowRanges = gr)  ## RangedVcfStack object (rowRanges() available)
-param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(rgstack))
-readvcf <- readVcfStack(stack, param = param)
-
-seed <- VCFArraySeed(rgstack, name = "GT")  ## success
-va <- VCFArray(seed)
-
-### -------------------------------
-## figure out how to select
-### -------------------------------
-
-param <- ScanVcfParam(info = sample(rownames(info(header)), 2), geno = "GT", samples= samples(header)[1:10])
-param <- ScanVcfParam(info = NA, fixed = NA, geno = "GT")
-a <- scanVcf(vcf, param = param)
-
-param <- ScanVcfParam(fixed = NA, geno=NA, info=NA)
-a <- readVcf(vcf, param = param)  ## return only rowRanges, REF
-## how to extract the a$rowRanges? Could be used in matching the row indexes in "extract_array".
-## 
-rowRanges(a)
-
-param <- ScanVcfParam(fixed = NA, info = NA, geno = "GT")
-a <- readVcf(vcf, param = param)
-geno(a)
-
-a$REF
-a$ALT
-a$QUAlL
-a$FILTER
-a$INFO
-dim(a$<NA>$GENO$GT)
