@@ -97,64 +97,9 @@ param <- ScanVcfParam(fixed="ALT", info=NA, geno=NA)
 res <- readVcf(vcf, genome="hg19", param=param)
 ans <- fixed(res)[["ALT"]]  ## DNAStringSetList -- 
 
-param <- ScanVcfParam(fixed=NA, info="CIEND", geno=NA)
-res <- readVcf(vcf, genome="hg19", param=param)
-ans <- info(res)[[1]]  ## IntegerList -- DelayedArray( array(IntegerList) )
-
-param <- ScanVcfParam(fixed=NA, info="HOMLEN", geno=NA)
-res <- readVcf(vcf, genome="hg19", param=param)
-ans <- info(res)[[1]]  ## IntegerList
-
-param <- ScanVcfParam(fixed=NA, info=NA)
-res <- readVcfStack(rgstack, param=param)
-
-param0 <- ScanVcfParam(fixed=NA, info=NA, geno=NA)
-vcfbasic <- readVcf(vcf, genome="hg19", param=param0)
-
-vcfWhich(param) <- granges(rowRanges(vcfbasic)[c(1:4, 10373:10376)])
-res <- readVcf(vcf, genome="hg19", param=param)
-## does not return any info() column...
-## for "IntegerList" columns of info(vcf), if vcfWhich != NA, will FAIL!
-
-vcfInfo(param) <- "LDAF"
-res <- readVcf(vcf, genome="hg19", param=param)
-
-seed <- VCFArraySeed(fl, name="CIEND")
-dim(seed)
-## [1] 10376
-VCFArray(seed)  ## ERROR
-
-seed <- VCFArraySeed(fl, name="CIPOS")
-VCFArray(seed)  ## ERROR
-```
-
-```{r}
-fl <- system.file("extdata", "chr22.vcf.gz",
-                  package="VariantAnnotation")
-hdr <- scanVcfHeader(fl)
-vcfinfo <- as.data.frame(info(hdr)[,1:2])
-infos <- rownames(vcfinfo)
-param0 <- ScanVcfParam(fixed=NA, info=NA, geno = NA)
-vcf0 <- readVcf(fl, genome="hg19", param = param0)
-rg <- rowRanges(vcf0)
-rgsubset <- rg[c(1:4, seq(to=length(rg), length.out=4))]
-
-## with vcfWhich(), info(CIEND, CIPOS, END, HOMLEN, HOMSEQ, SVLEN, SVTYPE) does not return anything.
-param <- ScanVcfParam(fixed=NA, info="CIEND", geno = NA, which = rgsubset)
-res <- readVcf(fl, genome="hg19", param = param)
-info(res)
-DelayedArray(array(info(res)[[1]]))
-
-## without vcfWhich(), info(CIEND, CIPOS, END, HOMLEN, HOMSEQ, SVLEN, SVTYPE) could return results we want. 
-param1 <- ScanVcfParam(fixed=NA, info="SVTYPE", geno = NA)
-res <- readVcf(fl, genome="hg19", param = param1)
-info(res)
-
-## with vcfWhich(), info:ELSE... could return successfully.
-param <- ScanVcfParam(fixed=NA, info="LDAF", geno = NA, which = rgsubset)
-res <- readVcf(fl, genome="hg19", param = param)
-info(res)
-
+readVcfStack(rgstack)  ## success
+readVcfStack(rgstack, param = ScanVcfParam(info = NA)) ## fails.
+readVcfStack(rgstack, param = ScanVcfParam(fixed = NA)) ## fails.
 ```
 
 

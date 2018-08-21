@@ -76,12 +76,8 @@ setMethod("show", "VCFArraySeed", function(object)
         res <- readVcfStack(vcf, param = param)
     }
     res <- eval(parse(text = pfix))(res)[[name]]
-    if (is(res, "DataFrame")){   ## FIXME: for some "IntegerList"
-                                 ## columns from info(), fails for
-                                 ## dim.
-        res <- res[[1]]
-        if (is(res, "list_OR_List"))
-            res <- array(res)
+    if (is(res, "list_OR_List")) {
+        res <- array(res)
     }
     res
 }
