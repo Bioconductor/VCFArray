@@ -1,14 +1,28 @@
 ---
-title: "Vignette Title"
-author: "Vignette Author"
-date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+title: "VCFArray: DelayedArray objects with on-disk/remote VCF backend"
+author:
+- name: Qian Liu
+  affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
+- name: Valerie Obenchain
+  affiliation: Fred Hutchinson Cancer Research Center, Seattle, WA
+- name: Martin Morgan
+  affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
+date: "last edit: 08/22/2018"
+output:
+    BiocStyle::html_document:
+        toc: true
+        toc_float: true
+package: VCFArray
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{VCFArray: DelayedArray objects with on-disk/remote VCF backend}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r options, eval=TRUE, echo=FALSE}
+options(showHeadLines=3)
+options(showTailLines=3)
+```
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -16,50 +30,57 @@ knitr::opts_chunk$set(
 )
 ```
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+# Introduction 
+[VCFArray][] is a _Bioconductor_ package that represents VCF files as
+objects derived from the [DelayedArray][] package and `DelayedArray`
+class. It converts data entries from VCF file into a
+`DelayedArray`-derived data structure. The backend VCF file could
+either be saved on-disk locally or remote as online resources. Data
+entries that could be extracted include the fixed data fields (REF,
+ALT, QUAL, FILTER), information field (e.g., AA, AF...), and the
+individual format field (e.g., GT, DP...). The array data generated
+from fixed/information fields are one-dimensional `VCFArray`, with the
+dimension being the length of the variants. The array data generated
+from individual `FORMAT` field are always returned with the first
+dimension being `variants` and the second dimension being
+`samples`. This feature is consistent with the assay data saved in
+`SummarizedExperiment`, and makes the `VCFArray` package interoperable
+with other established _Bioconductor_ data infrastructure.
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+[VCFArray]: https://bioconductor.org/packages/VCFArray
+[DelayedArray]: https://bioconductor.org/packages/DelayedArray
 
-## Vignette Info
+# Installation
 
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+1. Download the package. 
 
-## Styles
-
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
-
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
-
-## Figures
-
-The figure sizes have been customised so that you can easily put two images side-by-side. 
-
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
+```{r getPackage, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("VCFArray")
+```
+The development version is also available to download from Github. 
+```{r getDevel, eval=FALSE}
+BiocManager::install("Liubuntu/VCFArray")
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
-
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
-
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
-
-## More Examples
-
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
-
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
+2. Load the package into R session.
+```{r Load, message=FALSE}
+library(VCFArray)
 ```
 
-Also a quote using `>`:
+# VCFArray
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+## VCFArray, VCFMatrix
+`VCFArray` represents VCF files as `DelayedArray` instances. It has
+methods like `dim`, `dimnames` defined, and it inherits array-like
+operations and methods from `DelayedArray`, e.g., the subsetting
+method of `[`.
+
+## Internals: VCFArraySeed 
+
+# sessionInfo()
+
+```{r}
+sessionInfo()
+```

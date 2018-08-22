@@ -57,8 +57,9 @@ setMethod("show", "VCFArraySeed", function(object)
 ## For generating an R null object of type ... in VCF. 
 .get_VCFArraySeed_type <- function(seed, pfix, name)
 {
+    hdr <- scanVcfHeader(vcffile(seed))
     if (pfix %in% c("info", "geno")) {
-        tp <- eval(parse(text = pfix))(seed@vcfheader)[name, "Type"] 
+        tp <- eval(parse(text = pfix))(hdr)[name, "Type"] 
     } else if (name %in% c("REF", "ALT", "FILTER")) {
         tp <- "Character"
     } else if (name == "QUAL") {
@@ -247,6 +248,10 @@ setAs(
     "ANY", "VCFMatrix",
     function(from) as(as(from, "VCFArray"), "VCFMatrix"))
 
+### -------------------
+### VCFArray methods
+### -------------------
+setMethod("vcffile", "VCFArray", function(x) vcffile(seed(x)))
 
 ### -----------------
 ### Validity check
