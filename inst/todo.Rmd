@@ -37,8 +37,9 @@ traceback()
 - use readVCFStack(param = ) in VCFArraySeed() constructor.   -- done!
 - only takes in `RangedVcfStack` object, because it has the rowRanges() available, which is required for the `VCFArraySeed` constructor. -- done!
 
-6. **BUG**: show method for >2 dimensional array.  -- fixed in DelayedArray 0.7.28. 
-   bug report: https://github.com/Bioconductor/DelayedArray/issues/25   
+## **BUG**: show method for >2 dimensional array.  -- fixed in DelayedArray 0.7.28. 
+  
+	bug report: https://github.com/Bioconductor/DelayedArray/issues/25   
 ```{r}
 rgstack
 seed <- VCFArraySeed(rgstack, name="SB")
@@ -47,20 +48,9 @@ extract_array(seed, index)
 index <- list(seq(to=nrow(seed), length.out=2), NULL, NULL)
 extract_array(seed, index)
 VCFArray(seed)  ## ERROR
-
-### summary: all geno() entries tested and work for rgstack.
-### all info() entries tested and work for fl/vcf, except the number>1 entries. 
-
-VCFArray(rgstack, name = "FILTER")
-## Error in as.vector(x, mode = "character") : 
-##   no method for coercing this S4 class to a vector
-VCFArray(rgstack, name = "AC")
-## <1000> VCFArray object of type "integer":
-## Error in map_x_colnames_to_object_colnames(colnames(object)) : 
-##   the DataFrame objects to rbind must have the same number of columns
 ```
 
-7. type of returned data.    -- done
+## type of returned data.    -- done
 ```
 <10376 x 5> VCFMatrix object of type "Float":
 ```
@@ -81,12 +71,15 @@ G: The field has one value for each possible genotype.
 . (dot): The number of possible values varies, is unknown or unbounded. (list)
 
 
-8. How about the other data inside VCF? 
+## How about the other data inside VCF? 
 - todo: use array(DNAStringSetList/IntegerList/CharacterList) to construct DelayedArray objects. 
 - rowData(): REF,ALT, QUAL, FILTER, paramRangeID?
 - info(AC, AF, AN, DB, DP, FS, QD, ...)   
 - IntegerList? (info: CIEND...)
 - DNAStringSet (fixed: REF)
+- fixed(): 
+  CHROM, POS, ID. -- do not need specific columns. 
+  REF, ALT, QUAL, FILTER  readVcf(fixed = name)
 
 ```{r}
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
@@ -103,7 +96,6 @@ getClass("XStringSet")
 
 rgfile <- system.file("extdata", "rgstack.rda", package="VCFArray")
 rgfile
-## [1] "/home/qian/Documents/Research/VCFArray/inst/extdata/rgstack.rda"
 rgstack <- readRDS(rgfile)
 readVcfStack(rgstack)  ## success
 readVcfStack(rgstack, param = ScanVcfParam(info = NA)) ## fails.
@@ -116,7 +108,7 @@ readVcfStack(rgstack,
              j = 1:2)
 ```
 
-Martin: 
+## Martin: 
 
 1. add method of scanVcfHeader::VcfStack, to return the shared header info for all VcfFile objects inside the VcfStack object. 
 

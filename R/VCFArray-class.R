@@ -10,7 +10,7 @@ setClassUnion("VcfFile_OR_RangedVcfStack", c("VcfFile", "RangedVcfStack"))
 setClass("VCFArraySeed",
          contains = "Array",
          slots = c(vcffile = c("VcfFile_OR_RangedVcfStack"),
-                   vcfheader = "VCFHeader",
+                   ## vcfheader = "VCFHeader",
                    name = "character",
                    dim = "integer",
                    dimnames = "list",
@@ -22,6 +22,8 @@ setClass("VCFArraySeed",
 
 #' @export
 setMethod("dim", "VCFArraySeed", function(x) x@dim)
+#' @export
+setMethod("dimnames", "VCFArraySeed", function(x) x@dimnames)
 #' @export
 setGeneric("vcffile", function(x) standardGeneric("vcffile"))
 setMethod("vcffile", "VCFArraySeed", function(x) x@vcffile)
@@ -75,10 +77,11 @@ setMethod("show", "VCFArraySeed", function(object)
         param <- ScanVcfParam(fixed = NA, info = NA, geno = name)
     } else if (pfix == "info") {
         param <- ScanVcfParam(fixed = NA, info = name, geno = NA)
+        ##    } else if (pfix == "fixed" && name %in% c("CHROM", "POS", "ID", "REF")) {
     } else if (pfix == "fixed" && name == "REF") {
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
     } else if (pfix == "fixed") {
-            param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
+        param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
     }
     param
 }
@@ -117,17 +120,20 @@ setMethod("show", "VCFArraySeed", function(object)
                 index[[i]] <- seq_len(ans_dim[i])
         }
         gr <- x@gr
-
+        ## if (name %in% c("CHROM", "POS", "ID", "REF")) {
+        ## if (name == "REF") {
+        ##     ans <- mcols(gr)[[name]][ index[[1]] ]
+        ## } else {
         ## set basic params
         param <- .get_VCFArraySeed_basic_param(x, pfix, name)
         vcfWhich(param) <- gr[gr$pos %in% index[[1]] ]
         if (pfix == "geno" && length(ans_dim) > 1) {
             vcfSamples(param) <- colnames(x)[ index[[2]] ]
-        }
-
+        }        
         ## read array data from VcfFile/RangedVCfStack object.
         ans <- .readVcf_for_class(vcf, param, pfix, name)
-
+        ##}
+        
         ## final touch to return array (1D) / to subset >2D arrays.
         if (length(ans_dim) == 1) {
             dim(ans) <- ans_dim
@@ -139,6 +145,7 @@ setMethod("show", "VCFArraySeed", function(object)
     ans
 }
 
+#' @export
 setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 
 ### ---------------------------
@@ -147,7 +154,7 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 
 #' @import VariantAnnotation
 #' @import S4Vectors
-
+#' 
 VCFArraySeed <- function(vcffile = character(), index = character(), name = character())
 {
     ## browser()
@@ -175,6 +182,7 @@ VCFArraySeed <- function(vcffile = character(), index = character(), name = char
         header <- scanVcfHeader(vcffile)   ## FIXME: add the "scanVcfHeader,VcfStack".
     }
     geno <- rownames(geno(header))
+    ## fixed <- c("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER")
     fixed <- c("REF", "ALT", "QUAL", "FILTER")
     info <- rownames(info(header))
     msg <- paste('The Available values for "name" argument are: \n',
@@ -195,9 +203,11 @@ VCFArraySeed <- function(vcffile = character(), index = character(), name = char
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
         readvcf <- readVcf(vcffile, genome = "hg19", param = param)
     }
-    gr <- granges(rowRanges(readvcf)) 
+    gr <- granges(rowRanges(readvcf))
     gr$pos <- seq_along(gr)
-
+    ## gr <- rowRanges(readvcf)
+    ## mcols(gr) <- DataFrame(REF = mcols(gr)$REF, pos = seq_along(gr))
+    
     ## check the category of geno/info/fixed
     pfix <- ifelse(name %in% geno, "geno",
             ifelse(name %in% fixed, "fixed",
@@ -220,7 +230,9 @@ VCFArraySeed <- function(vcffile = character(), index = character(), name = char
         }
     }
     
-    new("VCFArraySeed", vcffile = vcffile, vcfheader = header,
+    new("VCFArraySeed",
+        vcffile = vcffile,
+        ## vcfheader = header,
         name = paste(pfix, name, sep = "/"),
         dim = dims, dimnames = dimnames, 
         gr = gr)
@@ -261,6 +273,7 @@ setMethod(
     function(seed) new_DelayedArray(seed, Class="VCFArray")  ## need "extract_array" to work.
     )
 
+#' @export
 VCFArray <- function(file = character(), index = character(), name=NA)
 {
     if (is(file, "VCFArraySeed")) {
