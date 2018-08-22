@@ -1,10 +1,7 @@
 ### -------------------------
 ### classes
 ### -------------------------
-#' @import methods
-#' @import GenomicFiles
-#' @import DelayedArray
-#' @import VariantAnnotation
+#' @import methods DelayedArray 
 setClassUnion("VcfFile_OR_RangedVcfStack", c("VcfFile", "RangedVcfStack"))
 
 setClass("VCFArraySeed",
@@ -30,6 +27,8 @@ setMethod("vcffile", "VCFArraySeed", function(x) x@vcffile)
 #' @export
 setMethod("rowRanges", "VCFArraySeed", function(x) x@gr)
 
+#' @export
+#' @import VariantAnnotation GenomicFiles
 setMethod("show", "VCFArraySeed", function(object)
 {
     vcf <- vcffile(object)
@@ -101,7 +100,6 @@ setMethod("show", "VCFArraySeed", function(object)
     res
 }
 
-#' @import GenomicRanges
 .extract_array_from_VCFArray <- function(x, index)
 {
     ## browser()
@@ -152,7 +150,6 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 ### VCFArraySeed constructor
 ### ---------------------------
 
-#' @import VariantAnnotation
 #' @import S4Vectors
 #' 
 VCFArraySeed <- function(vcffile = character(), index = character(), name = character())
