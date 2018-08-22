@@ -27,6 +27,39 @@ setMethod("vcffile", "VCFArraySeed", function(x) x@vcffile)
 #' @export
 setMethod("rowRanges", "VCFArraySeed", function(x) x@gr)
 
+.header <- function(file)
+{
+    if (is(file, "RangedVcfStack")) {
+        header <- scanVcfHeader(files(file)[[1]])
+    } else {
+        header <- scanVcfHeader(file)   ## FIXME: add the "scanVcfHeader,VcfStack".
+    }
+    header
+}
+    
+
+#' @export
+availableNames <- function(file)
+{
+    header <- .header(file)
+    geno <- rownames(geno(header))
+    ## fixed <- c("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER")
+    fixed <- c("REF", "ALT", "QUAL", "FILTER")
+    info <- rownames(info(header))
+    list(fixed = fixed, info = info, geno = geno)
+}
+
+.availableNames_msg <- function(file)
+{
+    avail <- availableNames(file)
+    msg <- paste('The Available values for "name" argument are: \n',
+                 "fixed(", length(avail$fixed), "): ", paste(avail$fixed, collapse = " "), "\n",
+                 "info(", length(avail$info), "): ", paste(avail$info, collapse = " "), "\n",
+                 "geno(", length(avail$geno), "): ", paste(avail$geno, collapse = " "), "\n",
+                 sep = "")
+    msg
+}
+
 #' @export
 #' @import VariantAnnotation GenomicFiles
 setMethod("show", "VCFArraySeed", function(object)
@@ -57,7 +90,7 @@ setMethod("show", "VCFArraySeed", function(object)
 ## For generating an R null object of type ... in VCF. 
 .get_VCFArraySeed_type <- function(seed, pfix, name)
 {
-    hdr <- scanVcfHeader(vcffile(seed))
+    hdr <- .header(vcffile(seed))
     if (pfix %in% c("info", "geno")) {
         tp <- eval(parse(text = pfix))(hdr)[name, "Type"] 
     } else if (name %in% c("REF", "ALT", "FILTER")) {
@@ -153,14 +186,15 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 
 #' @import S4Vectors
 #' 
-VCFArraySeed <- function(vcffile = character(), index = character(), name = character())
+VCFArraySeed <- function(file = character(), index = character(), name = character())
 {
     ## browser()
-    if(isSingleString(vcffile)) {
-        if(file.exists(vcffile)) 
-            vcffile <- VcfFile(normalizePath(vcffile))  ## in base R
+    if(isSingleString(file)) {
+        ## if(file.exists(file)) 
+        ## vcffile <- VcfFile(normalizePath(file))  ## in base R
+        vcffile <- VcfFile(file)
     }
-    if (is(vcffile, "VcfFile")) {
+        if (is(vcffile, "VcfFile")) {
         if (!is.na(index(vcffile)) && length(index)) {
             stop("'index' cannot be used when ",
                  "input already has the index file.")
@@ -168,31 +202,20 @@ VCFArraySeed <- function(vcffile = character(), index = character(), name = char
             if (length(index)) {
                 index(vcffile) <- index
             } else {
-                vcffile <- indexVcf(vcffile)
+                if (file.exists(file)) {
+                    vcffile <- indexVcf(vcffile)
+                } else {
+                    stop("Please specify the \"index\" file for the remote VCF file.")
+                }
             }
         }
     }
-        
-    ## read the header info
-    if (is(vcffile, "VcfStack")) {
-        header <- scanVcfHeader(files(vcffile)[[1]])
-    } else {
-        header <- scanVcfHeader(vcffile)   ## FIXME: add the "scanVcfHeader,VcfStack".
-    }
-    geno <- rownames(geno(header))
-    ## fixed <- c("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER")
-    fixed <- c("REF", "ALT", "QUAL", "FILTER")
-    info <- rownames(info(header))
-    msg <- paste('The Available values for "name" argument are: \n',
-               "fixed(", length(fixed), "): ", paste(fixed, collapse = " "), "\n",
-               "info(", length(info), "): ", paste(info, collapse = " "), "\n",
-               "geno(", length(geno), "): ", paste(geno, collapse = " "), "\n",
-               sep = "")
 
-    ## check "name" argument (case insensitive)
-    if (missing(name) || !name %in% c(fixed, info, geno))
-        stop(msg, "Please specify corectly!")
-    
+    avail <- availableNames(vcffile)
+    ## check "name" argument (case sensitive)
+    if (missing(name) || !name %in% unname(unlist(avail)))
+        stop(.availableNames_msg(vcffile), "Please specify corectly!")
+
     ## lightweight filter. Only return REF, rowRanges
     if (is(vcffile, "RangedVcfStack")) {
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(vcffile))
@@ -207,9 +230,12 @@ VCFArraySeed <- function(vcffile = character(), index = character(), name = char
     ## mcols(gr) <- DataFrame(REF = mcols(gr)$REF, pos = seq_along(gr))
     
     ## check the category of geno/info/fixed
-    pfix <- ifelse(name %in% geno, "geno",
-            ifelse(name %in% fixed, "fixed",
-            ifelse(name %in% info, "info", NULL)))
+    pfix <- ifelse(name %in% avail$geno, "geno",
+            ifelse(name %in% avail$fixed, "fixed",
+            ifelse(name %in% avail$info, "info", NULL)))
+    
+    ## header
+    header <- .header(vcffile)
     
     ## dims
     nvars <- length(gr)
