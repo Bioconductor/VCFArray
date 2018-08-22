@@ -1,8 +1,10 @@
 ### -------------------------
 ### classes
 ### -------------------------
-
+#' @import methods
 #' @import GenomicFiles
+#' @import DelayedArray
+#' @import VariantAnnotation
 setClassUnion("VcfFile_OR_RangedVcfStack", c("VcfFile", "RangedVcfStack"))
 
 setClass("VCFArraySeed",
@@ -18,9 +20,12 @@ setClass("VCFArraySeed",
 ### VCFArraySeed methods
 ### -------------------------
 
+#' @export
 setMethod("dim", "VCFArraySeed", function(x) x@dim)
+#' @export
 setGeneric("vcffile", function(x) standardGeneric("vcffile"))
 setMethod("vcffile", "VCFArraySeed", function(x) x@vcffile)
+#' @export
 setMethod("rowRanges", "VCFArraySeed", function(x) x@gr)
 
 setMethod("show", "VCFArraySeed", function(object)
@@ -141,38 +146,35 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 ### ---------------------------
 
 #' @import VariantAnnotation
-## #' @importFrom Rsamtools countTabix
+#' @import S4Vectors
 
-VCFArraySeed <- function(file = character(), index = character(), name = character())
+VCFArraySeed <- function(vcffile = character(), index = character(), name = character())
 {
     ## browser()
-    if (is(file, "VcfFile")) {
-        vcf <- file
-        if (!is.na(index(vcf)) && length(index)) {
-            stop("'index' cannot be used when 'VcfFile' ",
+    if(isSingleString(vcffile)) {
+        if(file.exists(vcffile)) 
+            vcffile <- VcfFile(normalizePath(vcffile))  ## in base R
+    }
+    if (is(vcffile, "VcfFile")) {
+        if (!is.na(index(vcffile)) && length(index)) {
+            stop("'index' cannot be used when ",
                  "input already has the index file.")
-        } else if (is.na(index(vcf))) {
+        } else if (is.na(index(vcffile))) {
             if (length(index)) {
-                index(vcf) <- index
+                index(vcffile) <- index
             } else {
-                vcf <- indexVcf(vcf)
+                vcffile <- indexVcf(vcffile)
             }
         }
-    } else if (is(file, "RangedVcfStack")) {
-        vcf <- file
-    } else if(isSingleString(file)) {
-        if(file.exists(file)) file <- normalizePath(file)  ## in base R
-        if (!length(index)) index = paste(file, "tbi", sep = ".")
-        vcf <- VcfFile(file, index = index)
     }
+        
     ## read the header info
-    if (is(vcf, "VcfStack")) {
-        header <- scanVcfHeader(files(vcf)[[1]])
+    if (is(vcffile, "VcfStack")) {
+        header <- scanVcfHeader(files(vcffile)[[1]])
     } else {
-        header <- scanVcfHeader(vcf)   ## FIXME: add the "scanVcfHeader,VcfStack".
+        header <- scanVcfHeader(vcffile)   ## FIXME: add the "scanVcfHeader,VcfStack".
     }
     geno <- rownames(geno(header))
-    ## fixed <- names(fixed(header))
     fixed <- c("REF", "ALT", "QUAL", "FILTER")
     info <- rownames(info(header))
     msg <- paste('The Available values for "name" argument are: \n',
@@ -184,15 +186,14 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     ## check "name" argument (case insensitive)
     if (missing(name) || !name %in% c(fixed, info, geno))
         stop(msg, "Please specify corectly!")
-    ## name <- toupper(name)
     
     ## lightweight filter. Only return REF, rowRanges
-    if (is(vcf, "RangedVcfStack")) {
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(vcf))
-        readvcf <- readVcfStack(vcf, param = param)
+    if (is(vcffile, "RangedVcfStack")) {
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(vcffile))
+        readvcf <- readVcfStack(vcffile, param = param)
     } else {
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
-        readvcf <- readVcf(vcf, genome = "hg19", param = param)
+        readvcf <- readVcf(vcffile, genome = "hg19", param = param)
     }
     gr <- granges(rowRanges(readvcf)) 
     gr$pos <- seq_along(gr)
@@ -211,15 +212,15 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     if (pfix == "geno") {
         dims[2] <- nsamps
         dimnames[[2]] <- samples(header)
-        extradim <- as.integer(geno(header)[name, "Number"]) ## FIXME:
-                                                             ## geno()/info()/fixed()
+
+        extradim <- as.integer(geno(header)[name, "Number"]) 
         if (!is.na(extradim) && extradim != 1) {
             dims <- c(dims, extradim)
             dimnames <- c(dimnames, list(as.character(seq_len(extradim))))
         }
     }
     
-    new("VCFArraySeed", vcffile = vcf, vcfheader = header,
+    new("VCFArraySeed", vcffile = vcffile, vcfheader = header,
         name = paste(pfix, name, sep = "/"),
         dim = dims, dimnames = dimnames, 
         gr = gr)

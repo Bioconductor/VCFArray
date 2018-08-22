@@ -4,8 +4,11 @@ Version: 0.0.0.9000
 Authors@R: c(
     person("Qian", "Liu", email = "qliu7@buffalo.edu", role = c("aut", "cre")),	
     person("Martin", "Morgan", role = "aut"))	       
-Description: Representing on-disk / remote VCF files as array-like objects,
-    array data under "FORMAT" field could be converted into array-like objects. 
+Description: VCFArray extends the DelayedArray to represent VCF data entries
+    as array-like objects with on-disk / remote VCF file as backend. Almost
+    all data entries from VCF files, including info fields, FORMAT fields,
+    genomic location info, and the fixed columns of REF, ALT, QUAL, FILTER,
+    could be converted into VCFArray objects with different dimensions. 
 biocViews: Infrastructure, DataRepresentation, Sequencing
 Depends:
     R (>= 3.5),
@@ -15,6 +18,7 @@ Encoding: UTF-8
 URL: https://github.com/Liubuntu/VCFArray
 BugReports: https://github.com/Liubuntu/VCFArray/issues
 Imports:
+    methods,
     GenomicRanges,
     VariantAnnotation,
     GenomicFiles,
@@ -24,4 +28,6 @@ VignetteBuilder: knitr
 Suggests:
     BiocStyle,
     BiocManager,
-    testthat
+    testthat,
+    knitr,
+    rmarkdown
