@@ -22,7 +22,8 @@ Imports:
     GenomicRanges,
     VariantAnnotation,
     GenomicFiles,
-    S4Vectors (>= 0.19.19)
+    S4Vectors (>= 0.19.19),
+    Rsamtools
 RoxygenNote: 6.1.0
 VignetteBuilder: knitr
 Suggests:

@@ -62,6 +62,7 @@ availableNames <- function(file)
 
 #' @export
 #' @import VariantAnnotation GenomicFiles
+#' @importFrom Rsamtools index index<-
 setMethod("show", "VCFArraySeed", function(object)
 {
     vcf <- vcffile(object)
@@ -184,7 +185,7 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 ### VCFArraySeed constructor
 ### ---------------------------
 
-#' @import S4Vectors
+#' @import GenomicRanges S4Vectors
 #' 
 VCFArraySeed <- function(file, index = character(), name = character())
 {
