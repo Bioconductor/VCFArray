@@ -72,9 +72,11 @@ setMethod("show", "VCFArraySeed", function(object)
             "VcfStack object with ", nrow(vcf), " files and ",
             ncol(vcf), " samples", "\n", 
             "VCF file path: ",
-            "'", path(vcffiles[[1]]), "' and ", nrow(vcf)-1, " more...", "\n",
+            "'", path(vcffiles[[1]]), "' and ",
+            nrow(vcf)-1, " more...", "\n",
             "VCF index path: ",
-            "'", index(vcffiles[[1]]), "' and ", nrow(vcf)-1, " more...", "\n",
+            "'", index(vcffiles[[1]]), "' and ",
+            nrow(vcf)-1, " more...", "\n",
             "array data: ", object@name, "\n",
             "dim: ", paste(dim(object), collapse=" x "), "\n",
             sep="")

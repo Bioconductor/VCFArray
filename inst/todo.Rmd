@@ -124,6 +124,9 @@ va <- VCFArray(fl, name = "GT")
 type(va)
 ```
 
+**rename**
+availableNames() ==> vcfEntries() ?? 
+
 ## Martin: 
 
 1. add method of scanVcfHeader::VcfStack, to return the shared header info for all VcfFile objects inside the VcfStack object. 
