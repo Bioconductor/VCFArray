@@ -23,7 +23,7 @@ test_that("VCFArraySeed arguments check works", {
 
     ## "name"
     expect_error(VCFArraySeed(fl, name = "any"))
-    expect_error(seed <- VCFArraySeed(fl))
+    expect_error(VCFArraySeed(fl))
 
 }) 
 
@@ -53,7 +53,8 @@ test_that("VCFArraySeed and VCFArray constructor works", {
     ## XStringSetList, IntegerList...
     va <- VCFArray(fl, name = "CIEND")
     expect_true(validObject(va))
-
+    ## type(va), "IntegerList"
+    
     ##----------------
     ## RangedVcfStack
     ##----------------

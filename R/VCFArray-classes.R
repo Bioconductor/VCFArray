@@ -42,7 +42,6 @@ setClass("VCFArraySeed",
         }        
         ## read array data from VcfFile/RangedVCfStack object.
         ans <- .readVcf_for_class(vcf, param, pfix, name)
-        ##}
         
         ## final touch to return array (1D) / to subset >2D arrays.
         if (length(ans_dim) == 1) {
@@ -88,6 +87,12 @@ VCFArraySeed <- function(file, vindex = character(),
                          name = character())
 {
     ## browser()
+    avail <- availableNames(file)
+    ## check "name" argument (case sensitive)
+    if (missing(name) || !name %in% unname(unlist(avail)))
+        stop(.availableNames_msg(file), "Please specify corectly!")
+
+    ## check "index" argument
     if(isSingleString(file)) {
         file <- VcfFile(file)
     } else if (is(file, "VcfFile")) {
@@ -106,12 +111,9 @@ VCFArraySeed <- function(file, vindex = character(),
                 }
             }
         }
+    } else {
+        stop("the \"file\" must be eithe")
     }
-
-    avail <- availableNames(file)
-    ## check "name" argument (case sensitive)
-    if (missing(name) || !name %in% unname(unlist(avail)))
-        stop(.availableNames_msg(file), "Please specify corectly!")
 
     ## lightweight filter. Only return REF, rowRanges
     if (is(file, "RangedVcfStack")) {
@@ -257,7 +259,7 @@ setMethod(
 #' as(va[1:10, ], "array")
 
 
-VCFArray <- function(file = character(), vindex = character(),
+VCFArray <- function(file, vindex = character(),
                      name=NA)
 {
     if (is(file, "VCFArraySeed")) {

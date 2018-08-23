@@ -11,10 +11,13 @@
 .availableNames_msg <- function(file)
 {
     avail <- availableNames(file)
-    msg <- paste('The Available values for "name" argument are: \n',
-                 "fixed(", length(avail$fixed), "): ", paste(avail$fixed, collapse = " "), "\n",
-                 "info(", length(avail$info), "): ", paste(avail$info, collapse = " "), "\n",
-                 "geno(", length(avail$geno), "): ", paste(avail$geno, collapse = " "), "\n",
+    msg <- paste('The available values for "name" argument are: \n',
+                 "fixed(", length(avail$fixed), "): ",
+                 paste(avail$fixed, collapse = " "), "\n",
+                 "info(", length(avail$info), "): ",
+                 paste(avail$info, collapse = " "), "\n",
+                 "geno(", length(avail$geno), "): ",
+                 paste(avail$geno, collapse = " "), "\n",
                  sep = "")
     msg
 }
@@ -57,6 +60,7 @@
     } else if (is(vcf, "RangedVcfStack")) {
         res <- readVcfStack(vcf, param = param)
     }
+    ## res <- pfixFun(res)[[name]]
     res <- eval(parse(text = pfix))(res)[[name]]
     if(is(res, "XStringSetList")) {
         res <- array(res@unlistData)
