@@ -18,7 +18,7 @@
 \usage{
 \S4method{extract_array}{VCFArraySeed}(x, index)
 
-VCFArray(file = character(), vindex = character(), name = NA)
+VCFArray(file, vindex = character(), name = NA)
 }
 \arguments{
 \item{x}{the VCFArraySeed object}

@@ -138,7 +138,7 @@ show the code here without evaluation.
 
 ```{r remote, eval=FALSE}
 chr22url <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"
-chr22url.tbi <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi"
+chr22url.tbi <- paste0(chr22url, ".tbi")
 va <- VCFArray(chr22url, vindex =chr22url.tbi, name = "GT")
 ```
 

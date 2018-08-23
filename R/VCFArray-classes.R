@@ -8,7 +8,7 @@ setClassUnion("VcfFile_OR_RangedVcfStack", c("VcfFile", "RangedVcfStack"))
 setClass("VCFArraySeed",
          contains = "Array",
          slots = c(vcffile = c("VcfFile_OR_RangedVcfStack"),
-                   ## vcfheader = "VCFHeader",
+                   pfix = "character",
                    name = "character",
                    dim = "integer",
                    dimnames = "list",
@@ -18,8 +18,8 @@ setClass("VCFArraySeed",
 {
     ## browser()
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
-    pfix <- sub("/.*", "", x@name)
-    name <- sub(".*/", "", x@name)
+    pfix <- x@pfix
+    name <- x@name
 
     if (any(ans_dim == 0L)){
         tp <- .get_VCFArraySeed_type(x, pfix, name)
@@ -86,9 +86,15 @@ setMethod("extract_array", "VCFArraySeed",
 VCFArraySeed <- function(file, vindex = character(),
                          name = character())
 {
-    ## browser()
-    avail <- availableNames(file)
+    ## check "file" argument
+    if (!(isSingleString(file) || is(file, "VcfFile_OR_RangedVcfStack"))) {
+        stop("The \"file\" argument must be either character string ",
+             "(indicating the VCF file path), ",
+             "or \"VcfFile\" object, or \"RangedVcfStack\" object. ")
+    }
+    
     ## check "name" argument (case sensitive)
+    avail <- availableNames(file)
     if (missing(name) || !name %in% unname(unlist(avail)))
         stop(.availableNames_msg(file), "Please specify corectly!")
 
@@ -111,8 +117,6 @@ VCFArraySeed <- function(file, vindex = character(),
                 }
             }
         }
-    } else {
-        stop("the \"file\" must be eithe")
     }
 
     ## lightweight filter. Only return REF, rowRanges
@@ -157,8 +161,8 @@ VCFArraySeed <- function(file, vindex = character(),
     
     new("VCFArraySeed",
         vcffile = file,
-        ## vcfheader = header,
-        name = paste(pfix, name, sep = "/"),
+        pfix = pfix,
+        name = name,
         dim = dims, dimnames = dimnames, 
         gr = gr)
 }
