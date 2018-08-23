@@ -1,4 +1,4 @@
-1. bug in document(). error returns for VCFArray(seed) after document(): 
+## **DOING** BUG REPORT: bug in document(). error returns for VCFArray(seed) after document(): 
 
 -- issue identified as bug in `devtools`: https://github.com/r-lib/devtools/issues/1845
 -- workaround now. export `DelayedUnaryOp` and `DelayedOp` classes from `DelayedArray` package (locally modified and installed. install.packages("/home/qian/Documents/Research/DelayedArray", repos=NULL)).
@@ -6,38 +6,22 @@
 ```{r}
 seed <- VCFArraySeed(fl, name = "GL")
 VCFArray(seed)
-## Error in validObject(.Object) : invalid class “DelayedMatrix” object: 
-##     'x' must have exactly 2 dimensions
+#> error in validObject(.Object) : invalid class “DelayedMatrix” object: 
+#>      'x' must have exactly 2 dimensions
 traceback()
-## 10: stop(msg, ": ", errors, domain = NA)
-## 9: validObject(.Object)
-## 8: initialize(value, ...)
-## 7: initialize(value, ...)
-## 6: new(...)
-## 5: new2(Class, seed = seed)
-## 4: new_DelayedArray(seed, Class = "VCFArray") at VCFArray-class.R#104
-## 3: DelayedArray(seed)
-## 2: DelayedArray(seed) at VCFArray-class.R#131
-## 1: VCFArray(seed)
+#> 10: stop(msg, ": ", errors, domain = NA)
+#> 9: validObject(.Object)
+#> 8: initialize(value, ...)
+#> 7: initialize(value, ...)
+#> 6: new(...)
+#> 5: new2(Class, seed = seed)
+#> 4: new_DelayedArray(seed, Class = "VCFArray") at VCFArray-class.R#104
+#> 3: DelayedArray(seed)
+#> 2: DelayedArray(seed) at VCFArray-class.R#131
+#> 1: VCFArray(seed)
 ```
 
-2. Remove the `Rsamtools` from `DESCRIPTION, Imports` for now. Because the `Rsamtools::countTabix()` function is remove from our script.   -- done!
-
-3. VCFArraySeed(file = "VCFFile")  -- done!
-- if (!is.na(index(file)) && length(index)) stop()
-- if (is.na(index(file)) && length(index) ) index(file) = index
-- if (is.na(index(file)) && !length(index) ) index(file) = paste0(path(file), ".tbi")
-
-4. save header info into `VCFArraySeed`. 
-- to extract the header info, geno(header)$Type in `extract_array`.  -- done!
-- fail later if `VCFArray(name=NULL)` in `VCFArraySeed(name = )` checking.   -- done!
-- extract the possible 3rd dimension of `VCFArraySeed` and save as @dim slot. -- done!
-  
-5. VCFArraySeed(file = "VCFStack")
-- use readVCFStack(param = ) in VCFArraySeed() constructor.   -- done!
-- only takes in `RangedVcfStack` object, because it has the rowRanges() available, which is required for the `VCFArraySeed` constructor. -- done!
-
-## **BUG**: show method for >2 dimensional array.  -- fixed in DelayedArray 0.7.28. 
+## **DONE** BUG report: show method for >2 dimensional array.  -- fixed in DelayedArray 0.7.28. 
   
 	bug report: https://github.com/Bioconductor/DelayedArray/issues/25   
 ```{r}
@@ -50,7 +34,7 @@ extract_array(seed, index)
 VCFArray(seed)  ## ERROR
 ```
 
-## type of returned data.    -- done
+## **DONE** type conversion from `VcfFile`.   
 ```
 <10376 x 5> VCFMatrix object of type "Float":
 ```
@@ -70,13 +54,13 @@ R: The field has one value for each possible allele, including the reference.
 G: The field has one value for each possible genotype. 
 . (dot): The number of possible values varies, is unknown or unbounded. (list)
 
-
-## How about the other data inside VCF? 
+## **DONE** How about the other data inside VCF? 
 - todo: use array(DNAStringSetList/IntegerList/CharacterList) to construct DelayedArray objects. 
 - rowData(): REF,ALT, QUAL, FILTER, paramRangeID?
 - info(AC, AF, AN, DB, DP, FS, QD, ...)   
 - IntegerList? (info: CIEND...)
 - DNAStringSet (fixed: REF)
+- DNAStringSetList (fixed: ALT)
 - fixed(): 
   CHROM, POS, ID. -- do not need specific columns. 
   REF, ALT, QUAL, FILTER  readVcf(fixed = name)
@@ -88,18 +72,20 @@ hdr <- scanVcfHeader(fl)
 
 param <- ScanVcfParam(fixed="ALT", info=NA, geno=NA)
 res <- readVcf(vcf, genome="hg19", param=param)
-ans <- fixed(res)[["ALT"]]  ## DNAStringSetList -- 
-ans <- array(ans@unlistData)  ## fixed. 
+ans <- fixed(res)[["ALT"]]  #> DNAStringSetList -- 
+ans <- array(ans@unlistData)  #> fixed. 
 
 getClass("XStringSetList")
 getClass("XStringSet")
-
+```
+## Some exploration for `VcfStack` file. 
+```
 rgfile <- system.file("extdata", "rgstack.rda", package="VCFArray")
 rgfile
 rgstack <- readRDS(rgfile)
-readVcfStack(rgstack)  ## success
-readVcfStack(rgstack, param = ScanVcfParam(info = NA)) ## fails.
-readVcfStack(rgstack, param = ScanVcfParam(fixed = NA)) ## fails.
+readVcfStack(rgstack)  #> success
+readVcfStack(rgstack, param = ScanVcfParam(info = NA)) #> fails.
+readVcfStack(rgstack, param = ScanVcfParam(fixed = NA)) #> fails.
 
 rg <- rowRanges(rgstack)
 
@@ -108,28 +94,54 @@ readVcfStack(rgstack,
              j = 1:2)
 ```
 
-**BUG**
+## **TODO** BUG: in numeric calculation. 
 ```{r, numeric}
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
 ds <- VCFArray(fl, name = "DS")
 log(ds+5)
 colSums(ds)  ## error
-## ds[colSums(ds) > 2, ,drop = FALSE]
+ds[colSums(ds) > 2, ,drop = FALSE]  #> FAIL. FIXME. 
 ```
 
-**BUG**, to be used as example in `VCFArray-methods.R`. 
+## **TODO** BUG: `type,VCFArray`. 
+to be used as example in `VCFArray-methods.R`. 
 ```{r, type}
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
 va <- VCFArray(fl, name = "GT")
 type(va)
 ```
 
-**rename**
-availableNames() ==> vcfEntries() ?? 
+## **DOING** generic function `availableVcfEntries`. 
 
-## Martin: 
-
-1. add method of scanVcfHeader::VcfStack, to return the shared header info for all VcfFile objects inside the VcfStack object. 
+Asked Valerie to define generic function in `VariantAnnotation`. 
+availableNames() ==> vcfEntries() or availableVcfEntries()...
 
 
+## **DOING** New feature request for `GenomicFiles`. 
 
+Martin suggests to add method of scanVcfHeader::VcfStack, to return
+the shared header info for all VcfFile objects inside the VcfStack
+object.
+
+
+
+
+## **TODO** **NEW FEATURE**: variant filtering/statistical functions. 
+```{r}
+library(VariantAnnotation)
+fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+vcf <- VcfFile(fl)
+seed <- VCFArraySeed(fl, name = "GT")
+VCFArray(seed)
+VCFArray(seed)[1:12, ]  ## simple operation degrades "VCFMatrix" into "DelayedMatrix". 
+
+table(isIndel(readVcf(vcffile(seed))))
+#> FALSE  TRUE 
+#>  9970   406 
+table(isInsertion(readVcf(vcffile(seed))))
+#> FALSE  TRUE 
+#> 10202   174 
+table(isSNV(readVcf(vcffile(seed))))
+#> FALSE  TRUE 
+#>   407  9969 
+```                         

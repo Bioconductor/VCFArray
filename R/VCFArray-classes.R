@@ -23,8 +23,8 @@ setClass("VCFArraySeed",
 
     if (any(ans_dim == 0L)){
         tp <- .get_VCFArraySeed_type(x, pfix, name)
-        ans <- eval(parse(text = tp))(0)  ## return integer(0) /
-                                          ## character(0) for 0 dim.
+        ans <- get(tp)(0)  ## return integer(0) / character(0) for 0
+                           ## dim.
         dim(ans) <- ans_dim
     } else {
         vcf <- vcffile(x)
@@ -130,8 +130,6 @@ VCFArraySeed <- function(file, vindex = character(),
     }
     gr <- granges(rowRanges(readvcf))
     gr$pos <- seq_along(gr)
-    ## gr <- rowRanges(readvcf)
-    ## mcols(gr) <- DataFrame(REF = mcols(gr)$REF, pos = seq_along(gr))
     
     ## check the category of geno/info/fixed
     pfix <- ifelse(name %in% avail$geno, "geno",
@@ -151,7 +149,8 @@ VCFArraySeed <- function(file, vindex = character(),
         dims[2] <- nsamps
         dimnames[[2]] <- samples(header)
 
-        extradim <- as.integer(geno(header)[name, "Number"]) 
+        extradim <- as.integer(geno(header)[name, "Number"])
+        ## convert into integer, "G/A/R/." will be NA. 
         if (!is.na(extradim) && extradim != 1) {
             dims <- c(dims, extradim)
             dimnames <- c(dimnames,

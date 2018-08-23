@@ -22,12 +22,17 @@
     msg
 }
 
+.pfixFun <- function(x)
+{
+    get(x, envir = getNamespace("VariantAnnotation"))
+}
+
 ## For generating an R null object of type ... in VCF. 
 .get_VCFArraySeed_type <- function(seed, pfix, name)
 {
     hdr <- .header(vcffile(seed))
     if (pfix %in% c("info", "geno")) {
-        tp <- eval(parse(text = pfix))(hdr)[name, "Type"] 
+        tp <- .pfixFun(pfix)(hdr)[name, "Type"]
     } else if (name %in% c("REF", "ALT", "FILTER")) {
         tp <- "Character"
     } else if (name == "QUAL") {
@@ -45,7 +50,6 @@
         param <- ScanVcfParam(fixed = NA, info = NA, geno = name)
     } else if (pfix == "info") {
         param <- ScanVcfParam(fixed = NA, info = name, geno = NA)
-        ##    } else if (pfix == "fixed" && name %in% c("CHROM", "POS", "ID", "REF")) {
     } else if (pfix == "fixed" && name == "REF") {
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
     } else if (pfix == "fixed") {
@@ -60,8 +64,7 @@
     } else if (is(vcf, "RangedVcfStack")) {
         res <- readVcfStack(vcf, param = param)
     }
-    ## res <- pfixFun(res)[[name]]
-    res <- eval(parse(text = pfix))(res)[[name]]
+    res <- .pfixFun(pfix)(res)[[name]]
     if(is(res, "XStringSetList")) {
         res <- array(res@unlistData)
     }else if (is(res, "list_OR_List")) {
