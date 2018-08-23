@@ -117,6 +117,12 @@ colSums(ds)  ## error
 ## ds[colSums(ds) > 2, ,drop = FALSE]
 ```
 
+**BUG**, to be used as example in `VCFArray-methods.R`. 
+```{r, type}
+fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+va <- VCFArray(fl, name = "GT")
+type(va)
+```
 
 ## Martin: 
 

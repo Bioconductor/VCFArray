@@ -72,19 +72,19 @@ library(VCFArray)
 ## VCFArray constructor
 
 To construct a `VCFArray` object, 3 arguments are needed: `file`,
-`index` and `name`. The `file` argument could take either a character
+`vindex` and `name`. The `file` argument could take either a character
 string (VCF file name), or `VcfFile` object, or a `RangedVcfStack`
 object. `name` argument must be specified to indicate which data entry
 we want to extract from the input file. It's case-sensitive, and must
-be consistent with the names from VCF header file.  `index` argument
+be consistent with the names from VCF header file.  `vindex` argument
 will only be used to indicate the file path of the index file if it
 does not exist.
 
-The exported function `availableNames()` takes the VCF file path or
-`VcfFile` object as input, and returns all available data entries that
-could be converted into `VCFArray` instances. The returned data entry
-names can be used as input for the `name` argumentg in `VCFArray`
-constructor.
+The exported function `availableNames()` takes the VCF file path,
+`VcfFile` object or `RangedVcfStack` object as input, and returns all
+available data entries that could be converted into `VCFArray`
+instances. The returned data entry names can be used as input for the
+`name` argument in `VCFArray` constructor.
 
 ```{r avail}
 args(VCFArray)
@@ -92,7 +92,7 @@ fl <- system.file("extdata", "chr22.vcf.gz", package = "VariantAnnotation")
 availableNames(fl)
 ```
 
-Since the index file for our vcf file already exists, the `index`
+Since the index file for our vcf file already exists, the `vindex`
 argument would not be needed (which is the most common case for
 on-disk VCF files). So we can construct the `VCFArray` object for the
 `GT` data entry in the provided VCF file with arguments of `file` and
@@ -132,14 +132,14 @@ VCFArray(rgstack, name = "SB")
 As the vignette title suggest, the backend VCF file could also be
 remote files. Here we included an example of representing VCF file of
 chromosome 22 from the 1000 Genomes Project (Phase 3). **NOTE that for
-a remote VCF file, the `index` argument must be specified.** Since
+a remote VCF file, the `vindex` argument must be specified.** Since
 this VCF files is relatively big, and it takes longer time, we only
 show the code here without evaluation.
 
 ```{r remote, eval=FALSE}
 chr22url <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"
 chr22url.tbi <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi"
-va <- VCFArray(chr22url, index =chr22url.tbi, name = "GT")
+va <- VCFArray(chr22url, vindex =chr22url.tbi, name = "GT")
 ```
 
 ## VCFArray methods

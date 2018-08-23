@@ -1,7 +1,8 @@
 ### -------------------------
 ### classes
 ### -------------------------
-#' @import methods DelayedArray 
+#' @import methods
+#' @import DelayedArray 
 setClassUnion("VcfFile_OR_RangedVcfStack", c("VcfFile", "RangedVcfStack"))
 
 setClass("VCFArraySeed",
@@ -13,129 +14,7 @@ setClass("VCFArraySeed",
                    dimnames = "list",
                    gr = "GRanges"))
 
-### -------------------------
-### VCFArraySeed methods
-### -------------------------
-
-#' @export
-setMethod("dim", "VCFArraySeed", function(x) x@dim)
-#' @export
-setMethod("dimnames", "VCFArraySeed", function(x) x@dimnames)
-#' @export
-setGeneric("vcffile", function(x) standardGeneric("vcffile"))
-setMethod("vcffile", "VCFArraySeed", function(x) x@vcffile)
-#' @export
-setMethod("rowRanges", "VCFArraySeed", function(x) x@gr)
-
-.header <- function(file)
-{
-    if (is(file, "RangedVcfStack")) {
-        header <- scanVcfHeader(files(file)[[1]])
-    } else {
-        header <- scanVcfHeader(file)   ## FIXME: add the "scanVcfHeader,VcfStack".
-    }
-    header
-}
-    
-
-#' @export
-availableNames <- function(file)
-{
-    header <- .header(file)
-    geno <- rownames(geno(header))
-    ## fixed <- c("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER")
-    fixed <- c("REF", "ALT", "QUAL", "FILTER")
-    info <- rownames(info(header))
-    list(fixed = fixed, info = info, geno = geno)
-}
-
-.availableNames_msg <- function(file)
-{
-    avail <- availableNames(file)
-    msg <- paste('The Available values for "name" argument are: \n',
-                 "fixed(", length(avail$fixed), "): ", paste(avail$fixed, collapse = " "), "\n",
-                 "info(", length(avail$info), "): ", paste(avail$info, collapse = " "), "\n",
-                 "geno(", length(avail$geno), "): ", paste(avail$geno, collapse = " "), "\n",
-                 sep = "")
-    msg
-}
-
-#' @export
-#' @import VariantAnnotation GenomicFiles
-#' @importFrom Rsamtools index index<-
-setMethod("show", "VCFArraySeed", function(object)
-{
-    vcf <- vcffile(object)
-    if (is(vcf, "VcfFile")) {
-        cat("VCFArraySeed\n",
-            "VCF file path: ", path(vcf), "\n",
-            "VCF index path: ", index(vcf), "\n",
-            "array data: ", object@name, "\n",
-            "dim: ", paste(dim(object), collapse=" x "), "\n",
-            sep="")
-    } else if (is(vcf, "VcfStack")) {
-        vcffiles <- files(vcf)
-        cat("VCFArraySeed\n",
-            "VcfStack object with ", nrow(vcf), " files and ",
-            ncol(vcf), " samples", "\n", 
-            "VCF file path: ",
-            "'", path(vcffiles[[1]]), "' and ", nrow(vcf)-1, " more...", "\n",
-            "VCF index path: ",
-            "'", index(vcffiles[[1]]), "' and ", nrow(vcf)-1, " more...", "\n",
-            "array data: ", object@name, "\n",
-            "dim: ", paste(dim(object), collapse=" x "), "\n",
-            sep="")
-    }
-})
-
-## For generating an R null object of type ... in VCF. 
-.get_VCFArraySeed_type <- function(seed, pfix, name)
-{
-    hdr <- .header(vcffile(seed))
-    if (pfix %in% c("info", "geno")) {
-        tp <- eval(parse(text = pfix))(hdr)[name, "Type"] 
-    } else if (name %in% c("REF", "ALT", "FILTER")) {
-        tp <- "Character"
-    } else if (name == "QUAL") {
-        tp <- "Float"
-    }
-    map <- c(Integer = "integer",  Float = "numeric", Flag = "character",
-             String = "character", Character = "character")
-    tp <- map[tp]
-    tp
-}
-
-.get_VCFArraySeed_basic_param <- function(seed, pfix, name)
-{
-    if (pfix == "geno") {
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = name)
-    } else if (pfix == "info") {
-        param <- ScanVcfParam(fixed = NA, info = name, geno = NA)
-        ##    } else if (pfix == "fixed" && name %in% c("CHROM", "POS", "ID", "REF")) {
-    } else if (pfix == "fixed" && name == "REF") {
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
-    } else if (pfix == "fixed") {
-        param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
-    }
-    param
-}
-.readVcf_for_class <- function(vcf, param, pfix, name)
-{
-    if(is(vcf, "VcfFile")) {
-        res <- readVcf(vcf, genome = "hg19", param = param)
-    } else if (is(vcf, "RangedVcfStack")) {
-        res <- readVcfStack(vcf, param = param)
-    }
-    res <- eval(parse(text = pfix))(res)[[name]]
-    if(is(res, "XStringSetList")) {
-        res <- array(res@unlistData)
-    }else if (is(res, "list_OR_List")) {
-        res <- array(res)
-    }
-    res
-}
-
-.extract_array_from_VCFArray <- function(x, index)
+.extract_array_from_VCFArraySeed <- function(x, index)
 {
     ## browser()
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
@@ -144,7 +23,7 @@ setMethod("show", "VCFArraySeed", function(object)
 
     if (any(ans_dim == 0L)){
         tp <- .get_VCFArraySeed_type(x, pfix, name)
-        ans <- eval(parse(text = tp))(0)  ## return integer(0) / character(0)
+        ans <- eval(parse(text = tp))(0)  ## return integer(0) / character(0) for 0 dim. 
         dim(ans) <- ans_dim
     } else {
         vcf <- vcffile(x)
@@ -153,10 +32,7 @@ setMethod("show", "VCFArraySeed", function(object)
                 index[[i]] <- seq_len(ans_dim[i])
         }
         gr <- x@gr
-        ## if (name %in% c("CHROM", "POS", "ID", "REF")) {
-        ## if (name == "REF") {
-        ##     ans <- mcols(gr)[[name]][ index[[1]] ]
-        ## } else {
+
         ## set basic params
         param <- .get_VCFArraySeed_basic_param(x, pfix, name)
         vcfWhich(param) <- gr[gr$pos %in% index[[1]] ]
@@ -178,32 +54,51 @@ setMethod("show", "VCFArraySeed", function(object)
     ans
 }
 
+#' VCFArray constructor and coercion methods.
+#'
+#' @name extract_array
 #' @export
-setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
+#' @description \code{extract_array}: the function to extract data
+#'     from a \code{VCF} file, by taking \code{VCFArraySeed} as
+#'     input. This function is required by the \code{DelayedArray} for
+#'     the seed contract.
+#' @param x the VCFArraySeed object
+#' @param index in \code{extract_array()}, an unnamed list of
+#'     subscripts as positive integer vectors, one vector per
+#'     dimension in \code{x}. Empty and missing subscripts
+#'     (represented by \code{integer(0)} and \code{NULL} list
+#'     elements, respectively) are allowed. The subscripts can contain
+#'     duplicated indices. They cannot contain NAs or non-positive
+#'     values.
+#' @aliases extract_array,VCFArraySeed-method
+#' @rdname VCFArray-classes
+
+setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArraySeed)
 
 ### ---------------------------
 ### VCFArraySeed constructor
 ### ---------------------------
 
-#' @import GenomicRanges S4Vectors
+#' @import GenomicRanges
+#' @import S4Vectors
 #' 
-VCFArraySeed <- function(file, index = character(), name = character())
+VCFArraySeed <- function(file, vindex = character(), name = character())
 {
     ## browser()
     if(isSingleString(file)) {
         file <- VcfFile(file)
     } else if (is(file, "VcfFile")) {
-        if (!is.na(index(file)) && length(index)) {
-            stop("'index' cannot be used when ",
+        if (!is.na(index(file)) && length(vindex)) {
+            stop("'vindex' cannot be used when ",
                  "input already has the index file.")
         } else if (is.na(index(file))) {
-            if (length(index)) {
-                index(file) <- index
+            if (length(vindex)) {
+                index(file) <- vindex
             } else {
                 if (file.exists(path(file))) {
                     file <- indexVcf(file)
                 } else {
-                    stop("Please specify the \"index\" file for the remote VCF file.")
+                    stop("Please specify the \"vindex\" file for the remote VCF file.")
                 }
             }
         }
@@ -260,22 +155,56 @@ VCFArraySeed <- function(file, index = character(), name = character())
         gr = gr)
 }
 
-### -------------------
-### VCFArray class
-### -------------------
+### --------------------------------
+### VCFArray and VCFMatrix objects
+### --------------------------------
+
+### We define these classes only for cosmetic reasons i.e. to hide the
+### DelayedArray and DelayedMatrix classes from the user. The user will see
+### and manipulate VCFArray and VCFMatrix objects instead of DelayedArray
+### and DelayedMatrix objects.
+
+#' @exportClass VCFArray
+#' @rdname VCFArray-classes
+#' @aliases VCFArray-class matrixClass,VCFArray-method
+#' @param file takes values for charater string (specifying the VCF
+#'     file path), \code{VcfFile} object, and \code{RangedVcfStack}
+#'     object.
+#' @param vindex in \code{VCFArray()}, the character string specifying
+#'     the index file path. This argument is required if an remote VCF
+#'     file is used for the \code{file} argument.
+#' @param name the data entry from VCF file to be read into
+#'     VCFArraySeed / VCFArray. For \code{VCFArray}. This argument
+#'     should always be specified.
+#' @return \code{VCFArray} class object.
+
 setClass("VCFArray", contains = "DelayedArray")
+
+#' @name VCFMatrix
+#' @exportClass VCFMatrix
+#' @aliases VCFMatrix-class
+#' @rdname VCFArray-classes
+
 setClass("VCFMatrix", contains=c("DelayedMatrix", "VCFArray"))
+
+## for internal use only.
 setMethod("matrixClass", "VCFArray", function(x) "VCFMatrix")
+
+### Automatic coercion method from VCFArray to VCFMatrix (muted for
+### higher dimensions) this function works only when VCFArray is
+### 2-dimensional, otherwise, it fails.
+
+#' @name coerce
+#' @export
+#' @aliases coerce,VCFArray,VCFMatrix-method
+#'     coerce,VCFMatrix,VCFArray-method coerce,ANY,VCFMatrix-method
+#' @rdname VCFArray-classes
+#' 
 setAs("VCFArray", "VCFMatrix", function(from) new("VCFMatrix", from))
 setAs("VCFMatrix", "VCFArray", function(from) from)
 setAs(
     "ANY", "VCFMatrix",
     function(from) as(as(from, "VCFArray"), "VCFMatrix"))
-
-### -------------------
-### VCFArray methods
-### -------------------
-setMethod("vcffile", "VCFArray", function(x) vcffile(seed(x)))
 
 ### -----------------
 ### Validity check
@@ -293,14 +222,34 @@ setValidity2("VCFArray", .validate_VCFArray)
 ### --------------
 ### VCFArray constructor
 ### --------------
-
 setMethod(
     "DelayedArray", "VCFArraySeed",
     function(seed) new_DelayedArray(seed, Class="VCFArray")  ## need "extract_array" to work.
     )
 
+#' @description \code{VCFArray}: The function to convert data entries
+#'     inside VCF file into the \code{VCFArray} instance.
 #' @export
-VCFArray <- function(file = character(), index = character(), name=NA)
+#' @aliases VCFArray-method
+#' @rdname VCFArray-classes
+#' @examples
+#' fl <- system.file("extdata", "chr22.vcf.gz",
+#'                   package="VariantAnnotation")
+#' va <- VCFArray(fl, name = "GT")
+#' va
+#' vcf <- VariantAnnotation::VcfFile(fl)
+#' va1 <- VCFArray(vcf, name = "GT")
+#' va1
+#' all.equal(va, va1)
+#' rgstackFile <- system.file("extdata", "rgstack.rda", package = "VCFArray")
+#' rgstack <- readRDS(rgstackFile)
+#' va2 <- VCFArray(rgstack, name = "SB")
+#' va2
+#' ## coercion
+#' as(va[1:10, ], "array")
+
+
+VCFArray <- function(file = character(), vindex = character(), name=NA)
 {
     if (is(file, "VCFArraySeed")) {
         if (!missing(name))
@@ -310,7 +259,7 @@ VCFArray <- function(file = character(), index = character(), name=NA)
         seed <- file
     }
     else {
-        seed <- VCFArraySeed(file, index = index, name = name)
+        seed <- VCFArraySeed(file, vindex = vindex, name = name)
     }
     DelayedArray(seed)   ## does the automatic coercion to VCFMatrix if 2-dim.
 }

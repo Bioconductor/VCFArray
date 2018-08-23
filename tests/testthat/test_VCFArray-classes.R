@@ -17,7 +17,7 @@ test_that("VCFArraySeed arguments check works", {
     
     index(vcf) <- NA
     index <- paste(path(vcf), "tbi", sep=".")
-    seed <- VCFArraySeed(vcf, index = index, name="DS")
+    seed <- VCFArraySeed(vcf, vindex = index, name="DS")
     expect_true(validObject(seed))
     expect_equal(index(vcffile(seed)), index)
 
