@@ -186,24 +186,21 @@ setMethod("extract_array", "VCFArraySeed", .extract_array_from_VCFArray)
 
 #' @import S4Vectors
 #' 
-VCFArraySeed <- function(file = character(), index = character(), name = character())
+VCFArraySeed <- function(file, index = character(), name = character())
 {
     ## browser()
     if(isSingleString(file)) {
-        ## if(file.exists(file)) 
-        ## vcffile <- VcfFile(normalizePath(file))  ## in base R
-        vcffile <- VcfFile(file)
-    }
-        if (is(vcffile, "VcfFile")) {
-        if (!is.na(index(vcffile)) && length(index)) {
+        file <- VcfFile(file)
+    } else if (is(file, "VcfFile")) {
+        if (!is.na(index(file)) && length(index)) {
             stop("'index' cannot be used when ",
                  "input already has the index file.")
-        } else if (is.na(index(vcffile))) {
+        } else if (is.na(index(file))) {
             if (length(index)) {
-                index(vcffile) <- index
+                index(file) <- index
             } else {
-                if (file.exists(file)) {
-                    vcffile <- indexVcf(vcffile)
+                if (file.exists(path(file))) {
+                    file <- indexVcf(file)
                 } else {
                     stop("Please specify the \"index\" file for the remote VCF file.")
                 }
@@ -211,18 +208,18 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
         }
     }
 
-    avail <- availableNames(vcffile)
+    avail <- availableNames(file)
     ## check "name" argument (case sensitive)
     if (missing(name) || !name %in% unname(unlist(avail)))
-        stop(.availableNames_msg(vcffile), "Please specify corectly!")
+        stop(.availableNames_msg(file), "Please specify corectly!")
 
     ## lightweight filter. Only return REF, rowRanges
-    if (is(vcffile, "RangedVcfStack")) {
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(vcffile))
-        readvcf <- readVcfStack(vcffile, param = param)
+    if (is(file, "RangedVcfStack")) {
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = rowRanges(file))
+        readvcf <- readVcfStack(file, param = param)
     } else {
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
-        readvcf <- readVcf(vcffile, genome = "hg19", param = param)
+        readvcf <- readVcf(file, genome = "hg19", param = param)
     }
     gr <- granges(rowRanges(readvcf))
     gr$pos <- seq_along(gr)
@@ -235,7 +232,7 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
             ifelse(name %in% avail$info, "info", NULL)))
     
     ## header
-    header <- .header(vcffile)
+    header <- .header(file)
     
     ## dims
     nvars <- length(gr)
@@ -255,7 +252,7 @@ VCFArraySeed <- function(file = character(), index = character(), name = charact
     }
     
     new("VCFArraySeed",
-        vcffile = vcffile,
+        vcffile = file,
         ## vcfheader = header,
         name = paste(pfix, name, sep = "/"),
         dim = dims, dimnames = dimnames, 
