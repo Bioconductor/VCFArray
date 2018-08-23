@@ -108,6 +108,16 @@ readVcfStack(rgstack,
              j = 1:2)
 ```
 
+**BUG**
+```{r, numeric}
+fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+ds <- VCFArray(fl, name = "DS")
+log(ds+5)
+colSums(ds)  ## error
+## ds[colSums(ds) > 2, ,drop = FALSE]
+```
+
+
 ## Martin: 
 
 1. add method of scanVcfHeader::VcfStack, to return the shared header info for all VcfFile objects inside the VcfStack object. 

@@ -3,11 +3,9 @@ title: "VCFArray: DelayedArray objects with on-disk/remote VCF backend"
 author:
 - name: Qian Liu
   affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
-- name: Valerie Obenchain
-  affiliation: Fred Hutchinson Cancer Research Center, Seattle, WA
 - name: Martin Morgan
   affiliation: Roswell Park Comprehensive Cancer Center, Buffalo, NY
-date: "last edit: 08/22/2018"
+date: "last edit: 08/23/2018"
 output:
     BiocStyle::html_document:
         toc: true
@@ -82,9 +80,11 @@ be consistent with the names from VCF header file.  `index` argument
 will only be used to indicate the file path of the index file if it
 does not exist.
 
-The exported function `availableNames` returns a list of available
-data entries from a VCF file that could be converted to `VCFArray`
-object.
+The exported function `availableNames()` takes the VCF file path or
+`VcfFile` object as input, and returns all available data entries that
+could be converted into `VCFArray` instances. The returned data entry
+names can be used as input for the `name` argumentg in `VCFArray`
+constructor.
 
 ```{r avail}
 args(VCFArray)
@@ -93,9 +93,10 @@ availableNames(fl)
 ```
 
 Since the index file for our vcf file already exists, the `index`
-argument would not be needed (which is the most common case). So we
-can construct the `VCFArray` object for the `GT` data entry in the
-provided VCF file with arguments of `file` and `name` only.
+argument would not be needed (which is the most common case for
+on-disk VCF files). So we can construct the `VCFArray` object for the
+`GT` data entry in the provided VCF file with arguments of `file` and
+`name` only.
 
 ```{r constructor}
 VCFArray(file = fl, name = "GT")
@@ -106,7 +107,7 @@ being a `VcfFile` object.
 
 ```{r constructor2}
 vcf <- VariantAnnotation::VcfFile(fl)
-## VCFArray(file = vcf, name = "DS")
+VCFArray(file = vcf, name = "DS")
 ```
 
 The `file` argument could also take `RangedVcfStack` object. Note that
@@ -130,10 +131,10 @@ VCFArray(rgstack, name = "SB")
 
 As the vignette title suggest, the backend VCF file could also be
 remote files. Here we included an example of representing VCF file of
-chromosome 22 from the 1000 Genomes Project (Phase 3). Note that for a
-remote VCF file, the `index` argument must be specified. Since this
-VCF files is relatively big, and it takes longer time, we only show
-the code here without evaluation.
+chromosome 22 from the 1000 Genomes Project (Phase 3). **NOTE that for
+a remote VCF file, the `index` argument must be specified.** Since
+this VCF files is relatively big, and it takes longer time, we only
+show the code here without evaluation.
 
 ```{r remote, eval=FALSE}
 chr22url <- "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"
@@ -147,17 +148,90 @@ va <- VCFArray(chr22url, index =chr22url.tbi, name = "GT")
 methods like `dim`, `dimnames` defined, and it inherits array-like
 operations and methods from `DelayedArray`, e.g., the subsetting
 method of `[`.     
-Note that for 1-dimensional `VCFArray` objects that are generated from
-the fixed / information data field of VCF file, when using `[` for
-subsetting, we should always use `drop = FALSE` to ensure `VCFArray`
-object as returned value.
+**NOTE** that for 1-dimensional `VCFArray` objects that are generated
+from the fixed / information data field of VCF file, `drop = FALSE`
+should always be used with `[` subsetting to ensure `VCFArray` object
+as returned value.
 
-```{r VCFArray}
-
-
-
+### slot accessors. 
+`seed` returns the `VCFArraySeed` of the `VCFArray` object, which
+  includes information about the backend VCF file, e.g., the vcf file
+  path, index file path, name of the data entry (with a prefix of
+  category), dimension and etc.
+  
+```{r, seedAccessor}
+va <- VCFArray(fl, name = "GT")
+seed(va)
 ```
-## Internals: VCFArraySeed 
+
+`vcffile` returns the `VcfFile` object corresponding to the backend
+  VCF file.
+```{r, vcffileAccessor}
+vcffile(va)
+```
+
+### `dim()` and `dimnames()`
+
+The `dimnames(VCFArray)` returns an unnamed list, with the length of
+each element being the same as return from `dim(VCFArray)`.
+
+```{r, dims}
+va <- VCFArray(fl, name = "GT")
+dim(va)
+class(dimnames(va))
+lengths(dimnames(va))
+```
+
+### `[` subsetting
+
+`VCFArray` instances can be subsetted, following the usual _R_
+conventions, with numeric or logical vectors; logical vectors are
+recycled to the appropriate length.
+
+```{r, subsetting}
+va[1:3, 1:3]
+va[c(TRUE, FALSE), ]
+```
+
+### Some numeric calculation
+
+Numeric calculations could be evaluated on `VCFArray` objects.
+
+```{r, numeric}
+ds <- VCFArray(fl, name = "DS")
+log(ds+5)
+```
+
+# Internals: VCFArraySeed 
+
+The `VCFArraySeed` class represents the 'seed' for the `VCFArray`
+object. It is not exported from the [VCFArray][] package. Seed objects
+should contain the VCF file path, and are expected to satisfy the
+“seed contract” of [DelayedArray][], i.e. to support `dim()` and
+`dimnames()`.
+
+```{r, VCFArraySeed}
+seed <- VCFArray:::VCFArraySeed(fl, name = "GT")
+seed
+path(vcffile(seed))
+```
+
+The seed can be used to construct a `VCFArray` instance.
+
+```{r, VCFArray-from-VCFArraySeed}
+(va <- VCFArray(seed))
+```
+
+The `DelayedArray()` constructor with `VCFArraySeed` object as inputs
+will return the same content as the `VCFArray()` constructor over the
+same `VCFArraySeed`.
+
+```{r, da}
+da <- DelayedArray(seed)
+class(da)
+all.equal(da, va)
+```
+
 
 # sessionInfo()
 
