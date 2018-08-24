@@ -5,10 +5,10 @@ Authors@R: c(
     person("Qian", "Liu", email = "qliu7@buffalo.edu", role = c("aut", "cre")),	
     person("Martin", "Morgan", role = "aut"))	       
 Description: VCFArray extends the DelayedArray to represent VCF data entries
-    as array-like objects with on-disk / remote VCF file as backend. Almost
-    all data entries from VCF files, including info fields, FORMAT fields,
-    genomic location info, and the fixed columns of REF, ALT, QUAL, FILTER,
-    could be converted into VCFArray objects with different dimensions. 
+    as array-like objects with on-disk / remote VCF file as backend. Data
+    entries from VCF files, includeing info fields, FORMAT fields, and the
+    fixed columns (REF, ALT, QUAL, FILTER) could be converted into VCFArray
+    instances with different dimensions. 
 biocViews: Infrastructure, DataRepresentation, Sequencing
 Depends:
     R (>= 3.5),
