@@ -103,12 +103,12 @@ colSums(ds)  ## error
 ds[colSums(ds) > 2, ,drop = FALSE]  #> FAIL. FIXME. 
 ```
 
-## **TODO** BUG: `type,VCFArray`. 
+## **DONE** BUG: `type,VCFArray`.  
 to be used as example in `VCFArray-methods.R`. 
 ```{r, type}
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
 va <- VCFArray(fl, name = "GT")
-type(va)
+DelayedArray::type(va)
 ```
 
 ## **DOING** generic function `availableVcfEntries`. 

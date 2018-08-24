@@ -19,6 +19,7 @@
 #' vcffile(va)
 #' seed(va)
 #' dim(seed(va))
+#' DelayedArray::type(va)
 
 setMethod("dim", "VCFArraySeed", function(x) x@dim)
 

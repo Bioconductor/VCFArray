@@ -64,4 +64,5 @@ dimnames(va)
 vcffile(va)
 seed(va)
 dim(seed(va))
+DelayedArray::type(va)
 }

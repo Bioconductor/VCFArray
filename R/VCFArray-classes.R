@@ -2,7 +2,10 @@
 ### classes
 ### -------------------------
 #' @import methods
-#' @import DelayedArray 
+#' @import BiocGenerics
+#' @import DelayedArray
+#' @importFrom tools file_path_as_absolute
+#' 
 setClassUnion("VcfFile_OR_RangedVcfStack", c("VcfFile", "RangedVcfStack"))
 
 setClass("VCFArraySeed",

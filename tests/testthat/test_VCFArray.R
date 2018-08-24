@@ -53,7 +53,7 @@ test_that("VCFArraySeed and VCFArray constructor works", {
     ## XStringSetList, IntegerList...
     va <- VCFArray(fl, name = "CIEND")
     expect_true(validObject(va))
-    ## type(va), "IntegerList"
+    ## DelayedArray::type(va), "IntegerList"
     
     ##----------------
     ## RangedVcfStack
