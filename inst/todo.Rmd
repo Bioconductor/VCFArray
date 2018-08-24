@@ -152,3 +152,12 @@ issue reported: https://github.com/Bioconductor/DelayedArray/issues/27
 Herve said feasible but requires major development. Will work on them
 after September.  After done, the ".readVcf\_for\_class" function need
 to remove the "array()" before returning the result.
+
+
+## **TODO** rename "availableNames" into "vcfFields" as method. 
+
+Pull request created https://github.com/Bioconductor/VariantAnnotation/pull/11
+Added `vcfFields` generic and methods for "character" and `VcfFile`.   
+
+Once merged, will define vcfFields,RangedVcfStack-method (pkg:GenomicFiles), and 
+remove the `availableNames` functions from `VCFArray`. 
