@@ -1,6 +1,6 @@
 # VCFArray
 
-`VCFArray` is a Bioconductor package that represents VCF files as objects
+`VCFArray` is a _Bioconductor_ package that represents VCF files as objects
  derived from the `DelayedArray` package and `DelayedArray` class. 
 It converts data entries from VCF file into a DelayedArray-derived 
 data structure. The backend VCF file could either be saved on-disk 
