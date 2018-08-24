@@ -126,7 +126,7 @@ object.
 
 
 
-## **TODO** **NEW FEATURE**: variant filtering/statistical functions. 
+## **NEW FEATURE TODO**: variant filtering/statistical functions. 
 ```{r}
 library(VariantAnnotation)
 fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
@@ -145,3 +145,10 @@ table(isSNV(readVcf(vcffile(seed))))
 #> FALSE  TRUE 
 #>   407  9969 
 ```                         
+
+## **TODO** feature request to support `List` `DelayedArray`. 
+
+issue reported: https://github.com/Bioconductor/DelayedArray/issues/27
+Herve said feasible but requires major development. Will work on them
+after September.  After done, the ".readVcf\_for\_class" function need
+to remove the "array()" before returning the result.
