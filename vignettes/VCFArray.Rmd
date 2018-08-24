@@ -115,7 +115,7 @@ an ordinary `VcfStack` object without `Range` information could not
 be used to construct a `VCFArray`.
 
 ```{r rgstack}
-rgfile <- system.file("extdata", "rgstack.rda", package = "VCFArray")
+rgfile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
 rgstack <- readRDS(rgfile)
 rgstack
 ```

@@ -10,7 +10,7 @@ test_that("availableNames works", {
     avail1 <- availableNames(vcf)
     expect_identical(avail, avail1)
 
-    rgstackFile <- system.file("extdata", "rgstack.rda", package = "VCFArray")
+    rgstackFile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
     rgstack <- readRDS(rgstackFile)
     avail2 <- availableNames(rgstack)
 

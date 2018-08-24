@@ -7,4 +7,4 @@ seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
 stack <- VcfStack(files, seqinfo)
 gr <- as(seqinfo(stack)[rownames(stack)], "GRanges")
 rgstack <- RangedVcfStack(stack, rowRanges = gr)  ## RangedVcfStack
-saveRDS(rgstack, file = "inst/extdata/rgstack.rda")
+saveRDS(rgstack, file = "inst/extdata/rgstack.rds")

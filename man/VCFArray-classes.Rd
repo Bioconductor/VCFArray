@@ -64,7 +64,7 @@ vcf <- VariantAnnotation::VcfFile(fl)
 va1 <- VCFArray(vcf, name = "GT")
 va1
 all.equal(va, va1)
-rgstackFile <- system.file("extdata", "rgstack.rda",
+rgstackFile <- system.file("extdata", "rgstack.rds",
                            package = "VCFArray")
 rgstack <- readRDS(rgstackFile)
 va2 <- VCFArray(rgstack, name = "SB")

@@ -59,7 +59,7 @@ test_that("VCFArraySeed and VCFArray constructor works", {
     ## RangedVcfStack
     ##----------------
 
-    rgstackFile <- system.file("extdata", "rgstack.rda", package = "VCFArray")
+    rgstackFile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
     rgstack <- readRDS(rgstackFile)
 
     ## geno()
