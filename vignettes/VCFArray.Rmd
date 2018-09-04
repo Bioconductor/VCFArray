@@ -80,16 +80,19 @@ be consistent with the names from VCF header file.  `vindex` argument
 will only be used to indicate the file path of the index file if it
 does not exist.
 
-The exported function `availableNames()` takes the VCF file path,
-`VcfFile` object or `RangedVcfStack` object as input, and returns all
-available data entries that could be converted into `VCFArray`
-instances. The returned data entry names can be used as input for the
-`name` argument in `VCFArray` constructor.
+The `vcfFields()` method takes the VCF file path, `VcfFile` object or
+`RangedVcfStack` object as input, and returns a CharacterList with all
+available VCF fields within specific categories. Users should consult
+the `fixed`, `info` and `geno` category for available data entries
+that could be converted into `VCFArray` instances. The data entry
+names can be used as input for the `name` argument in `VCFArray`
+constructor.
 
 ```{r avail}
 args(VCFArray)
 fl <- system.file("extdata", "chr22.vcf.gz", package = "VariantAnnotation")
-availableNames(fl)
+library(VariantAnnotation)
+vcfFields(fl)
 ```
 
 Since the index file for our vcf file already exists, the `vindex`
@@ -125,7 +128,7 @@ Here we choose the `name = SB`, which returns a 3-dimensional
 and samples respectively.
 
 ```{r constructor3}
-availableNames(rgstack)$geno
+vcfFields(rgstack)$geno
 VCFArray(rgstack, name = "SB")
 ```
 
