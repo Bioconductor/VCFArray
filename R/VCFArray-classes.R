@@ -19,7 +19,6 @@ setClass("VCFArraySeed",
 
 .extract_array_from_VCFArraySeed <- function(x, index)
 {
-    ## browser()
     ans_dim <- DelayedArray:::get_Nindex_lengths(index, dim(x))
     pfix <- x@pfix
     name <- x@name
@@ -97,7 +96,7 @@ VCFArraySeed <- function(file, vindex = character(),
     }
     
     ## check "name" argument (case sensitive)
-    avail <- availableNames(file)
+    avail <- vcfFields(file)
     if (missing(name) || !name %in% unname(unlist(avail)))
         stop(.availableNames_msg(file), "Please specify corectly!")
 
@@ -282,15 +281,3 @@ VCFArray <- function(file, vindex = character(),
                          ## if 2-dim.
 }
 
-### -------------
-### example 
-### -------------
-
-## setMethod("example", "VCFArray", function (topic = "ANY", package = "VCFArray")
-## {
-##     fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
-##     seed <- VCFArraySeed(fl, "GT")
-##     ## seed <- VCFArraySeed(fl, "DS")
-##     ## seed <- VCFArraySeed(fl, "GL")
-##     VCFArray(seed)
-## })

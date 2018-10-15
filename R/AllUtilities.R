@@ -10,7 +10,7 @@
 
 .availableNames_msg <- function(file)
 {
-    avail <- availableNames(file)
+    avail <- vcfFields(file)
     msg <- paste('The available values for "name" argument are: \n',
                  "fixed(", length(avail$fixed), "): ",
                  paste(avail$fixed, collapse = " "), "\n",

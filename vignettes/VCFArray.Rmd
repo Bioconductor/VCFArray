@@ -88,7 +88,7 @@ that could be converted into `VCFArray` instances. The data entry
 names can be used as input for the `name` argument in `VCFArray`
 constructor.
 
-```{r avail}
+```{r avail, message=FALSE}
 args(VCFArray)
 fl <- system.file("extdata", "chr22.vcf.gz", package = "VariantAnnotation")
 library(VariantAnnotation)

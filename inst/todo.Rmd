@@ -1,3 +1,30 @@
+## **NEW FEATURE TODO** next release: variant filtering/statistical functions. 
+```{r}
+library(VariantAnnotation)
+fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+vcf <- VcfFile(fl)
+seed <- VCFArraySeed(fl, name = "GT")
+VCFArray(seed)
+VCFArray(seed)[1:12, ]  ## simple operation degrades "VCFMatrix" into "DelayedMatrix". 
+
+table(isIndel(readVcf(vcffile(seed))))
+#> FALSE  TRUE 
+#>  9970   406 
+table(isInsertion(readVcf(vcffile(seed))))
+#> FALSE  TRUE 
+#> 10202   174 
+table(isSNV(readVcf(vcffile(seed))))
+#> FALSE  TRUE 
+#>   407  9969 
+```                         
+	
+## **DOING** feature request to support `List` `DelayedArray`. 
+
+issue reported: https://github.com/Bioconductor/DelayedArray/issues/27
+Herve said feasible but requires major development. Will work on them
+after September.  After done, the ".readVcf\_for\_class" function need
+to remove the "array()" before returning the result.
+
 ## **DOING** BUG REPORT: bug in document(). error returns for VCFArray(seed) after document(): 
 
 -- issue identified as bug in `devtools`: https://github.com/r-lib/devtools/issues/1845
@@ -20,6 +47,20 @@ traceback()
 #> 2: DelayedArray(seed) at VCFArray-class.R#131
 #> 1: VCFArray(seed)
 ```
+
+## **TODO** BUG: in numeric calculation. For `DelayedArray`?
+```{r, numeric}
+fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+ds <- VCFArray(fl, name = "DS")
+log(ds+5)
+colSums(ds)  ## error
+ds[colSums(ds) > 2, ,drop = FALSE]  #> FAIL. FIXME. 
+```
+## **DOING** New feature request for `GenomicFiles`. 
+
+Martin suggests to add method of scanVcfHeader::VcfStack, to return
+the shared header info for all VcfFile objects inside the VcfStack
+object.
 
 ## **DONE** BUG report: show method for >2 dimensional array.  -- fixed in DelayedArray 0.7.28. 
   
@@ -78,6 +119,23 @@ ans <- array(ans@unlistData)  #> fixed.
 getClass("XStringSetList")
 getClass("XStringSet")
 ```
+## **DONE** BUG: `type,VCFArray`.  
+to be used as example in `VCFArray-methods.R`. 
+```{r, type}
+fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
+va <- VCFArray(fl, name = "GT")
+DelayedArray::type(va)
+```
+
+## **DONE** rename "availableNames" into "vcfFields" as method. 
+
+Pull request created https://github.com/Bioconductor/VariantAnnotation/pull/11
+Added `vcfFields` generic and methods for "character" and `VcfFile`.   
+Pull request created GenomicFiles: https://github.com/Bioconductor/GenomicFiles/pull/1
+Added vcfFields methods for vcfStack.
+
+Once merged, will remove the `availableNames` functions from `VCFArray` in R/man/tests/vignette...
+
 ## Some exploration for `VcfStack` file. 
 ```
 rgfile <- system.file("extdata", "rgstack.rda", package="VCFArray")
@@ -94,70 +152,3 @@ readVcfStack(rgstack,
              j = 1:2)
 ```
 
-## **TODO** BUG: in numeric calculation. 
-```{r, numeric}
-fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
-ds <- VCFArray(fl, name = "DS")
-log(ds+5)
-colSums(ds)  ## error
-ds[colSums(ds) > 2, ,drop = FALSE]  #> FAIL. FIXME. 
-```
-
-## **DONE** BUG: `type,VCFArray`.  
-to be used as example in `VCFArray-methods.R`. 
-```{r, type}
-fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
-va <- VCFArray(fl, name = "GT")
-DelayedArray::type(va)
-```
-
-## **DOING** generic function `availableVcfEntries`. 
-
-Asked Valerie to define generic function in `VariantAnnotation`. 
-availableNames() ==> vcfEntries() or availableVcfEntries()...
-
-
-## **DOING** New feature request for `GenomicFiles`. 
-
-Martin suggests to add method of scanVcfHeader::VcfStack, to return
-the shared header info for all VcfFile objects inside the VcfStack
-object.
-
-
-
-
-## **NEW FEATURE TODO**: variant filtering/statistical functions. 
-```{r}
-library(VariantAnnotation)
-fl <- system.file("extdata", "chr22.vcf.gz", package="VariantAnnotation")
-vcf <- VcfFile(fl)
-seed <- VCFArraySeed(fl, name = "GT")
-VCFArray(seed)
-VCFArray(seed)[1:12, ]  ## simple operation degrades "VCFMatrix" into "DelayedMatrix". 
-
-table(isIndel(readVcf(vcffile(seed))))
-#> FALSE  TRUE 
-#>  9970   406 
-table(isInsertion(readVcf(vcffile(seed))))
-#> FALSE  TRUE 
-#> 10202   174 
-table(isSNV(readVcf(vcffile(seed))))
-#> FALSE  TRUE 
-#>   407  9969 
-```                         
-
-## **TODO** feature request to support `List` `DelayedArray`. 
-
-issue reported: https://github.com/Bioconductor/DelayedArray/issues/27
-Herve said feasible but requires major development. Will work on them
-after September.  After done, the ".readVcf\_for\_class" function need
-to remove the "array()" before returning the result.
-
-
-## **TODO** rename "availableNames" into "vcfFields" as method. 
-
-Pull request created https://github.com/Bioconductor/VariantAnnotation/pull/11
-Added `vcfFields` generic and methods for "character" and `VcfFile`.   
-
-Once merged, will define vcfFields,RangedVcfStack-method (pkg:GenomicFiles), and 
-remove the `availableNames` functions from `VCFArray`. 
