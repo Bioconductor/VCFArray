@@ -15,7 +15,8 @@ setClass("VCFArraySeed",
                    name = "character",
                    dim = "integer",
                    dimnames = "list",
-                   gr = "GRanges"))
+                   gr = "GRanges",
+                   pos = "integer"))
 
 .extract_array_from_VCFArraySeed <- function(x, index)
 {
@@ -38,7 +39,7 @@ setClass("VCFArraySeed",
 
         ## set basic params
         param <- .get_VCFArraySeed_basic_param(x, pfix, name)
-        vcfWhich(param) <- gr[gr$pos %in% index[[1]] ]
+        vcfWhich(param) <- gr[x@pos %in% index[[1]] ]
         if (pfix == "geno" && length(ans_dim) > 1) {
             vcfSamples(param) <- colnames(x)[ index[[2]] ]
         }        
@@ -100,7 +101,7 @@ VCFArraySeed <- function(file, vindex = character(),
     if (missing(name) || !name %in% unname(unlist(avail)))
         stop(.availableNames_msg(file), "Please specify corectly!")
 
-    ## check "index" argument
+    ## check "vindex" argument
     if(isSingleString(file)) {
         file <- VcfFile(file)
     } else if (is(file, "VcfFile")) {
@@ -131,7 +132,8 @@ VCFArraySeed <- function(file, vindex = character(),
         readvcf <- readVcf(file, genome = "hg19", param = param)
     }
     gr <- granges(rowRanges(readvcf))
-    gr$pos <- seq_along(gr)
+
+    pos <- seq_along(gr)
     
     ## check the category of geno/info/fixed
     pfix <- ifelse(name %in% avail$geno, "geno",
@@ -165,7 +167,9 @@ VCFArraySeed <- function(file, vindex = character(),
         pfix = pfix,
         name = name,
         dim = dims, dimnames = dimnames, 
-        gr = gr)
+        gr = gr,
+        pos = pos
+        )
 }
 
 ### --------------------------------

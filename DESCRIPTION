@@ -1,12 +1,12 @@
 Package: VCFArray
 Title: Representing on-disk / remote VCF files as array-like objects
-Version: 0.99.0
+Version: 0.99.1
 Authors@R: c(
     person("Qian", "Liu", email = "qliu7@buffalo.edu", role = c("aut", "cre")),	
     person("Martin", "Morgan", role = "aut"))	       
 Description: VCFArray extends the DelayedArray to represent VCF data entries
     as array-like objects with on-disk / remote VCF file as backend. Data
-    entries from VCF files, includeing info fields, FORMAT fields, and the
+    entries from VCF files, including info fields, FORMAT fields, and the
     fixed columns (REF, ALT, QUAL, FILTER) could be converted into VCFArray
     instances with different dimensions. 
 biocViews: Infrastructure, DataRepresentation, Sequencing
@@ -22,7 +22,7 @@ BugReports: https://github.com/Liubuntu/VCFArray/issues
 Imports:
     tools,
     GenomicRanges,
-    VariantAnnotation (>= 1.27.7),
+    VariantAnnotation (>= 1.27.9),
     GenomicFiles (>= 1.17.3),
     S4Vectors (>= 0.19.19),
     Rsamtools
