@@ -121,13 +121,15 @@ be used to construct a `VCFArray`.
 rgfile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
 rgstack <- readRDS(rgfile)
 rgstack
+paths <- path(files(rgstack))
+file.exists(paths)
 ```
 
 Here we choose the `name = SB`, which returns a 3-dimensional
 `VCFArray` object, with the first 2 dimensions correspond to variants
 and samples respectively.
 
-```{r constructor3}
+```{r constructor3, eval=FALSE}
 vcfFields(rgstack)$geno
 VCFArray(rgstack, name = "SB")
 ```
