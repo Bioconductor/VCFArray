@@ -121,6 +121,7 @@ be used to construct a `VCFArray`.
 rgfile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
 rgstack <- readRDS(rgfile)
 rgstack
+library(GenomicFiles)
 paths <- path(files(rgstack))
 file.exists(paths)
 ```
