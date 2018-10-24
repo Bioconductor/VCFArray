@@ -118,19 +118,21 @@ an ordinary `VcfStack` object without `Range` information could not
 be used to construct a `VCFArray`.
 
 ```{r rgstack}
-rgfile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
-rgstack <- readRDS(rgfile)
+extdata <- system.file(package="GenomicFiles", "extdata")
+files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)
+names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
+seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
+stack <- GenomicFiles::VcfStack(files, seqinfo)
+gr <- as(seqinfo(stack)[rownames(stack)], "GRanges")
+rgstack <- GenomicFiles::RangedVcfStack(stack, rowRanges = gr)  ## RangedVcfStack
 rgstack
-library(GenomicFiles)
-paths <- path(files(rgstack))
-file.exists(paths)
 ```
 
 Here we choose the `name = SB`, which returns a 3-dimensional
 `VCFArray` object, with the first 2 dimensions correspond to variants
 and samples respectively.
 
-```{r constructor3, eval=FALSE}
+```{r constructor3}
 vcfFields(rgstack)$geno
 VCFArray(rgstack, name = "SB")
 ```

@@ -59,8 +59,13 @@ test_that("VCFArraySeed and VCFArray constructor works", {
     ## RangedVcfStack
     ##----------------
 
-    rgstackFile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
-    rgstack <- readRDS(rgstackFile)
+    extdata <- system.file(package="GenomicFiles", "extdata")
+    files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)
+    names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
+    seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
+    stack <- VcfStack(files, seqinfo)
+    gr <- as(seqinfo(stack)[rownames(stack)], "GRanges")
+    rgstack <- RangedVcfStack(stack, rowRanges = gr)  ## RangedVcfStack
 
     ## geno()
     seed <- VCFArraySeed(rgstack, name = "GT")  ## success
