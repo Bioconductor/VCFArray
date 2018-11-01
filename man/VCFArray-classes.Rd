@@ -65,6 +65,7 @@ va1 <- VCFArray(vcf, name = "GT")
 va1
 all.equal(va, va1)
 
+\dontrun{
 ## RangedVcfStack class
 library(GenomicFiles)
 extdata <- system.file(package="GenomicFiles", "extdata")
@@ -76,6 +77,7 @@ gr <- as(seqinfo(stack)[rownames(stack)], "GRanges")
 rgstack <- RangedVcfStack(stack, rowRanges = gr)  ## RangedVcfStack
 va2 <- VCFArray(rgstack, name = "SB")
 va2
+}
 ## coercion
 as(va[1:10, ], "array")
 }
