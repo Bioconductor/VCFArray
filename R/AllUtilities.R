@@ -3,7 +3,7 @@
     if (is(file, "RangedVcfStack")) {
         header <- scanVcfHeader(files(file)[[1]])
     } else {
-        header <- scanVcfHeader(file)   ## FIXME: add the "scanVcfHeader,VcfStack".
+        header <- scanVcfHeader(file)
     }
     header
 }
@@ -37,6 +37,8 @@
         tp <- "Character"
     } else if (name == "QUAL") {
         tp <- "Float"
+    } else {
+        return(NULL)
     }
     map <- c(Integer = "integer",  Float = "numeric", Flag = "character",
              String = "character", Character = "character")
@@ -54,6 +56,8 @@
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
     } else if (pfix == "fixed") {
         param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
+    } else {
+        return(NULL)
     }
     param
 }

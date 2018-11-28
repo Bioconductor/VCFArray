@@ -161,7 +161,7 @@ from the fixed / information data field of VCF file, `drop = FALSE`
 should always be used with `[` subsetting to ensure `VCFArray` object
 as returned value.
 
-### slot accessors. 
+### slot accessors 
 `seed` returns the `VCFArraySeed` of the `VCFArray` object, which
   includes information about the backend VCF file, e.g., the vcf file
   path, index file path, name of the data entry (with a prefix of

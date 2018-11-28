@@ -1,6 +1,6 @@
 Package: VCFArray
 Title: Representing on-disk / remote VCF files as array-like objects
-Version: 0.99.7
+Version: 0.99.8
 Authors@R: c(
     person("Qian", "Liu", email = "qliu7@buffalo.edu", role = c("aut", "cre")),	
     person("Martin", "Morgan", role = "aut"))	       
@@ -11,7 +11,7 @@ Description: VCFArray extends the DelayedArray to represent VCF data entries
     instances with different dimensions. 
 biocViews: Infrastructure, DataRepresentation, Sequencing
 Depends:
-    R (>= 3.5),
+    R (>= 3.6),
     methods,
     BiocGenerics,
     DelayedArray (>= 0.7.28)
@@ -26,7 +26,7 @@ Imports:
     GenomicFiles (>= 1.17.3),
     S4Vectors (>= 0.19.19),
     Rsamtools
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 VignetteBuilder: knitr
 Suggests:
     BiocStyle,
