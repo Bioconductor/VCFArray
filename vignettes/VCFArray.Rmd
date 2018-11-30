@@ -59,7 +59,7 @@ BiocManager::install("VCFArray")
 ```
 The development version is also available to download from Github. 
 ```{r getDevel, eval=FALSE}
-BiocManager::install("Liubuntu/VCFArray")
+BiocManager::install("Bioconductor/VCFArray")
 ```
 
 2. Load the package into R session.
