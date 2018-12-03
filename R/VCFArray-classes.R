@@ -102,11 +102,10 @@ VCFArraySeed <- function(file, vindex = character(),
         stop(.availableNames_msg(file), "Please specify corectly!")
 
     ## check "vindex" argument
-    if(isSingleString(file)) {
-        file <- VcfFile(file)
-    } else if (is(file, "VcfFile")) {
+    if(isSingleString(file)) file <- VcfFile(file)
+    if (is(file, "VcfFile")) {
         if (!is.na(index(file)) && length(vindex)) {
-            stop("'vindex' cannot be used when ",
+            stop("\"vindex\" cannot be used when ",
                  "input already has the index file.")
         } else if (is.na(index(file))) {
             if (length(vindex)) {
@@ -121,7 +120,6 @@ VCFArraySeed <- function(file, vindex = character(),
             }
         }
     }
-
     ## lightweight filter. Only return REF, rowRanges
     if (is(file, "RangedVcfStack")) {
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA,
