@@ -22,7 +22,7 @@ BugReports: https://github.com/Liubuntu/VCFArray/issues
 Imports:
     tools,
     GenomicRanges,
-    VariantAnnotation (>= 1.27.9),
+    VariantAnnotation (>= 1.29.3),
     GenomicFiles (>= 1.17.3),
     S4Vectors (>= 0.19.19),
     Rsamtools
