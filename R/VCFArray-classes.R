@@ -96,11 +96,6 @@ VCFArraySeed <- function(file, vindex = character(),
              "or \"VcfFile\" object, or \"RangedVcfStack\" object. ")
     }
     
-    ## check "name" argument (case sensitive)
-    avail <- vcfFields(file)
-    if (missing(name) || !name %in% unname(unlist(avail)))
-        stop(.availableNames_msg(file), "Please specify corectly!")
-
     ## check "vindex" argument
     if(isSingleString(file)) file <- VcfFile(file)
     if (is(file, "VcfFile")) {
@@ -120,6 +115,12 @@ VCFArraySeed <- function(file, vindex = character(),
             }
         }
     }
+
+    ## check "name" argument (case sensitive)
+    avail <- vcfFields(file)
+    if (missing(name) || !name %in% unname(unlist(avail)))
+        stop(.availableNames_msg(file), "Please specify correctly!")
+
     ## lightweight filter. Only return REF, rowRanges
     if (is(file, "RangedVcfStack")) {
         param <- ScanVcfParam(fixed = NA, info = NA, geno = NA,
