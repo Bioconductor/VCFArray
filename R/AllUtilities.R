@@ -11,14 +11,15 @@
 .availableNames_msg <- function(file)
 {
     avail <- vcfFields(file)
-    msg <- paste('The available values for "name" argument are: \n',
-                 "fixed(", length(avail$fixed), "): ",
-                 paste(avail$fixed, collapse = " "), "\n",
-                 "info(", length(avail$info), "): ",
-                 paste(avail$info, collapse = " "), "\n",
-                 "geno(", length(avail$geno), "): ",
-                 paste(avail$geno, collapse = " "), "\n",
-                 sep = "")
+    msg <- paste(
+        'The available values for "name" argument are: \n',
+        "fixed(", length(avail$fixed), "): ",
+        paste(avail$fixed, collapse = " "), "\n",
+        "info(", length(avail$info), "): ",
+        paste(avail$info, collapse = " "), "\n",
+        "geno(", length(avail$geno), "): ",
+        paste(avail$geno, collapse = " "), "\n",
+        sep = "")
     msg
 }
 

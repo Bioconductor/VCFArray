@@ -1,6 +1,6 @@
 Package: VCFArray
 Title: Representing on-disk / remote VCF files as array-like objects
-Version: 0.99.12
+Version: 0.99.13
 Authors@R: c(
     person("Qian", "Liu", email = "qliu7@buffalo.edu", role = c("aut", "cre")),	
     person("Martin", "Morgan", role = "aut"))	       
@@ -9,7 +9,7 @@ Description: VCFArray extends the DelayedArray to represent VCF data entries
     entries from VCF files, including info fields, FORMAT fields, and the
     fixed columns (REF, ALT, QUAL, FILTER) could be converted into VCFArray
     instances with different dimensions. 
-biocViews: Infrastructure, DataRepresentation, Sequencing
+biocViews: Infrastructure, DataRepresentation, Sequencing, VariantAnnotation
 Depends:
     R (>= 3.6),
     methods,
