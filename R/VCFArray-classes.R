@@ -258,13 +258,20 @@ setMethod(
 #' va1 <- VCFArray(vcf, name = "GT")
 #' va1
 #' all.equal(va, va1)
-#'
+#' \dontrun{
 #' ## RangedVcfStack class
-#' library(GenomicFiles)
-#' rgstackFile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
-#' rgstack <- readRDS(rgstackFile)
+#' extdata <- system.file(package = "GenomicFiles", "extdata")
+#' files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)[1:3]
+#' names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
+#' seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
+#' stack <- GenomicFiles::VcfStack(files, seqinfo)
+#' gr <- as(GenomicFiles::seqinfo(stack)[rownames(stack)], "GRanges")
+#' ## RangedVcfStack
+#' rgstack <- GenomicFiles::RangedVcfStack(stack, rowRanges = gr)
+#' rgstack
 #' va2 <- VCFArray(rgstack, name = "SB")
 #' va2
+#' }
 
 #' ## coercion
 #' as(va[1:10, ], "array")

@@ -59,29 +59,35 @@ test_that("VCFArraySeed and VCFArray constructor works", {
     ## RangedVcfStack
     ##----------------
 
-    rgstackFile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
-    rgstack <- readRDS(rgstackFile)
-
+    extdata <- system.file(package = "GenomicFiles", "extdata")
+    files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)[1:3]
+    names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
+    seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
+    stack <- GenomicFiles::VcfStack(files, seqinfo)
+    gr <- as(GenomicFiles::seqinfo(stack)[rownames(stack)], "GRanges")
+    rgstack <- GenomicFiles::RangedVcfStack(stack, rowRanges = gr)  
+    
     ## geno()
     seed <- VCFArraySeed(rgstack, name = "GT")
-    expect_identical(dim(seed), c(1000L, 3L))
+    expect_identical(dim(seed), c(505L, 3L))
 
     ## fixed()
     seed <- VCFArraySeed(rgstack, name = "FILTER")
-    expect_identical(dim(seed), 1000L)
+    expect_identical(dim(seed), 505L)
     va <- VCFArray(seed)
     expect_s4_class(va, "VCFArray")
 
     ## info()
     seed <- VCFArraySeed(rgstack, name = "set")
-    expect_identical(dim(seed), 1000L)
+    expect_identical(dim(seed), 505L)
 
     ## 3-dim array
     seed <- VCFArraySeed(rgstack, name = "SB")
     va <- VCFArray(seed)
-    expect_identical(dim(va), c(1000L, 3L, 4L))
+    expect_identical(dim(va), c(505L, 3L, 4L))
     expect_s4_class(va, "VCFArray")
     
     va1 <- VCFArray(rgstack, name = "SB")
     expect_identical(va, va1)
 })
+
