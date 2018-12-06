@@ -22,7 +22,7 @@ test_that("VCFArraySeed arguments check works", {
     expect_equal(index(vcffile(seed)), index)
 
     ## "name"
-    expect_error(VCFArraySeed(fl, name = "any"))
+    expect_error(VCFArraySeed(fl, name = "notValidName"))
     expect_error(VCFArraySeed(fl))
 
 }) 
@@ -59,13 +59,8 @@ test_that("VCFArraySeed and VCFArray constructor works", {
     ## RangedVcfStack
     ##----------------
 
-    extdata <- system.file(package="GenomicFiles", "extdata")
-    files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)
-    names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
-    seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
-    stack <- VcfStack(files, seqinfo)
-    gr <- as(seqinfo(stack)[rownames(stack)], "GRanges")
-    rgstack <- RangedVcfStack(stack, rowRanges = gr)
+    rgstackFile <- system.file("extdata", "rgstack.rds", package = "VCFArray")
+    rgstack <- readRDS(rgstackFile)
 
     ## geno()
     seed <- VCFArraySeed(rgstack, name = "GT")
