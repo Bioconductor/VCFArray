@@ -260,7 +260,7 @@ setMethod(
 #' \dontrun{
 #' ## RangedVcfStack class
 #' extdata <- system.file(package = "GenomicFiles", "extdata")
-#' files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)[1:3]
+#' files <- dir(extdata, pattern="^CEUtrio.*bgz$", full=TRUE)[1:2]
 #' names(files) <- sub(".*_([0-9XY]+).*", "\\1", basename(files))
 #' seqinfo <- as(readRDS(file.path(extdata, "seqinfo.rds")), "Seqinfo")
 #' stack <- GenomicFiles::VcfStack(files, seqinfo)
