@@ -241,7 +241,6 @@ setValidity2("VCFArray", .validate_VCFArray)
 setMethod(
     "DelayedArray", "VCFArraySeed",
     function(seed) new_DelayedArray(seed, Class="VCFArray")
-    ## need "extract_array" to work.
     )
 
 #' @description \code{VCFArray}: The function to convert data entries
