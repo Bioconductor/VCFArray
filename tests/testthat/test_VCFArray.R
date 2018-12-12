@@ -69,22 +69,22 @@ test_that("VCFArraySeed and VCFArray constructor works", {
     
     ## geno()
     seed <- VCFArraySeed(rgstack, name = "GT")
-    expect_identical(dim(seed), c(505L, 3L))
+    expect_identical(dim(seed), c(318L, 3L))
 
     ## fixed()
     seed <- VCFArraySeed(rgstack, name = "FILTER")
-    expect_identical(dim(seed), 505L)
+    expect_identical(dim(seed), 318L)
     va <- VCFArray(seed)
     expect_s4_class(va, "VCFArray")
 
     ## info()
     seed <- VCFArraySeed(rgstack, name = "set")
-    expect_identical(dim(seed), 505L)
+    expect_identical(dim(seed), 318L)
 
     ## 3-dim array
     seed <- VCFArraySeed(rgstack, name = "SB")
     va <- VCFArray(seed)
-    expect_identical(dim(va), c(505L, 3L, 4L))
+    expect_identical(dim(va), c(318L, 3L, 4L))
     expect_s4_class(va, "VCFArray")
     
     va1 <- VCFArray(rgstack, name = "SB")
