@@ -32,14 +32,15 @@ setClass("VCFArraySeed",
     } else {
         vcf <- vcffile(x)
         for(i in seq_along(index)) {
-            if(is.null(index[[i]]))
-                index[[i]] <- seq_len(ans_dim[i])
+            ## if(is.null(index[[i]]))
+            ##     index[[i]] <- seq_len(ans_dim[i])
         }
         gr <- x@gr
 
         ## set basic params
         param <- .get_VCFArraySeed_basic_param(x, pfix, name)
-        vcfWhich(param) <- gr[x@pos %in% index[[1]] ]
+        if (! is.null(index[[1]]))
+            vcfWhich(param) <- gr[x@pos %in% index[[1]] ]  ## FIXME: diff dims if NULL for "ALT"
         if (pfix == "geno" && length(ans_dim) > 1) {
             vcfSamples(param) <- colnames(x)[ index[[2]] ]
         }        
