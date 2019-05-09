@@ -88,7 +88,7 @@ setMethod("extract_array", "VCFArraySeed",
 #' @import S4Vectors
 #' 
 VCFArraySeed <- function(file, vindex = character(),
-                         name = character())
+                         name = character(), pfix = NULL)
 {
     ## check "file" argument
     if (!(isSingleString(file) || is(file, "VcfFile_OR_RangedVcfStack"))) {
@@ -136,6 +136,14 @@ VCFArraySeed <- function(file, vindex = character(),
     pos <- seq_along(gr)
     
     ## check the category of geno/info/fixed
+    ## check if identical name in multipe categories.
+    if (is.null(pfix)) {
+        pfix <- names(unlist(avail)[unlist(avail) == name])
+        if (length(pfix) > 1)
+            stop(wmsg("Multiple records of '", name, "' are found in '",
+                      paste(pfix, collapse = ", "), "'.",
+                      "Please specify in: VCFArray(pfix = \"\")."))
+    }
     pfix <- ifelse(name %in% avail$geno, "geno",
             ifelse(name %in% avail$fixed, "fixed",
             ifelse(name %in% avail$info, "info", NULL)))
@@ -193,6 +201,10 @@ VCFArraySeed <- function(file, vindex = character(),
 #' @param name the data entry from VCF file to be read into
 #'     VCFArraySeed / VCFArray. For \code{VCFArray}. This argument
 #'     should always be specified.
+#' @param pfix the category that the \code{name} belongs to. Available
+#'     values are \code{fixed}, \code{info}, and \code{info}. Can also
+#'     Check \code{vcfFields(file)} for matching \code{name} and
+#'     \code{pfix}.
 #' @return \code{VCFArray} class object.
 
 setClass("VCFArray", contains = "DelayedArray")
@@ -278,7 +290,7 @@ setMethod(
 
 
 VCFArray <- function(file, vindex = character(),
-                     name=NA)
+                     name=NA, pfix = NULL)
 {
     if (is(file, "VCFArraySeed")) {
         if (!missing(name))
@@ -288,7 +300,8 @@ VCFArray <- function(file, vindex = character(),
         seed <- file
     }
     else {
-        seed <- VCFArraySeed(file, vindex = vindex, name = name)
+        seed <- VCFArraySeed(file, vindex = vindex, name = name,
+                             pfix = pfix)
     }
     DelayedArray(seed)   ## does the automatic coercion to VCFMatrix
                          ## if 2-dim.

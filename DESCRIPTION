@@ -1,6 +1,6 @@
 Package: VCFArray
 Title: Representing on-disk / remote VCF files as array-like objects
-Version: 1.1.1
+Version: 1.1.2
 Authors@R: c(
     person("Qian", "Liu", email = "qliu7@buffalo.edu", role = c("aut", "cre")),	
     person("Martin", "Morgan", role = "aut"))	       
@@ -29,6 +29,7 @@ Imports:
 RoxygenNote: 6.1.1
 VignetteBuilder: knitr
 Suggests:
+    SeqArray,
     BiocStyle,
     BiocManager,
     testthat,

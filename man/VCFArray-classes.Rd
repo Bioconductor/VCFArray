@@ -18,7 +18,7 @@
 \usage{
 \S4method{extract_array}{VCFArraySeed}(x, index)
 
-VCFArray(file, vindex = character(), name = NA)
+VCFArray(file, vindex = character(), name = NA, pfix = NULL)
 }
 \arguments{
 \item{x}{the VCFArraySeed object}
@@ -42,6 +42,11 @@ file is used for the \code{file} argument.}
 \item{name}{the data entry from VCF file to be read into
 VCFArraySeed / VCFArray. For \code{VCFArray}. This argument
 should always be specified.}
+
+\item{pfix}{the category that the \code{name} belongs to. Available
+values are \code{fixed}, \code{info}, and \code{info}. Can also
+Check \code{vcfFields(file)} for matching \code{name} and
+\code{pfix}.}
 }
 \value{
 \code{VCFArray} class object.
