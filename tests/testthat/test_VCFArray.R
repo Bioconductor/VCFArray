@@ -45,6 +45,8 @@ test_that("VCFArraySeed and VCFArray constructor works", {
 
     fl1 <- SeqArray::seqExampleFileName("vcf")
     expect_error(VCFArraySeed(fl1, name = "DP"))  ## multiple "DP" record
+    va <- VCFArray(fl1, name="DP", pfix="info")
+    expect_identical(dim(va), 1348L)
     
     ## fixed()
     seed <- VCFArraySeed(fl, name = "REF")

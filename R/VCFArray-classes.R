@@ -144,10 +144,7 @@ VCFArraySeed <- function(file, vindex = character(),
                       paste(pfix, collapse = ", "), "'.",
                       "Please specify in: VCFArray(pfix = \"\")."))
     }
-    pfix <- ifelse(name %in% avail$geno, "geno",
-            ifelse(name %in% avail$fixed, "fixed",
-            ifelse(name %in% avail$info, "info", NULL)))
-    
+
     ## header
     header <- .header(file)
     
