@@ -22,7 +22,7 @@ test_that("VCFArraySeed arguments check works", {
     expect_equal(index(vcffile(seed)), index)
 
     ## "name"
-    expect_error(VCFArraySeed(fl, name = "notValidName"))
+    expect_error(VCFArraySeed(fl, name = "inValidName"))
     expect_error(VCFArraySeed(fl))
 
 }) 
@@ -42,6 +42,9 @@ test_that("VCFArraySeed and VCFArray constructor works", {
     va <- VCFArray(seed)
     expect_true(validObject(va))
     expect_identical(dim(seed), dim(va))
+
+    fl1 <- SeqArray::seqExampleFileName("vcf")
+    expect_error(VCFArraySeed(fl1, name = "DP"))  ## multiple "DP" record
     
     ## fixed()
     seed <- VCFArraySeed(fl, name = "REF")

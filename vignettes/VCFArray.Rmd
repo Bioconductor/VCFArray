@@ -71,14 +71,17 @@ library(VCFArray)
 
 ## VCFArray constructor
 
-To construct a `VCFArray` object, 3 arguments are needed: `file`,
-`vindex` and `name`. The `file` argument could take either a character
-string (VCF file name), or `VcfFile` object, or a `RangedVcfStack`
-object. `name` argument must be specified to indicate which data entry
-we want to extract from the input file. It's case-sensitive, and must
-be consistent with the names from VCF header file.  `vindex` argument
-will only be used to indicate the file path of the index file if it
-does not exist.
+To construct a `VCFArray` object, 4 arguments are needed: `file`,
+`vindex` and `name`, and `pfix`. The `file` argument could take either
+a character string (VCF file name), or `VcfFile` object, or a
+`RangedVcfStack` object. `name` argument must be specified to indicate
+which data entry we want to extract from the input file. It's
+case-sensitive, and must be consistent with the names from VCF header
+file.  `vindex` argument will only be used to indicate the file path
+of the index file if it does not exist. `pfix` is used to spefify the
+category that the `name` field belongs to. **NOTE** that the `pfix`
+needs to be provided specifically when there are same `name` in
+multiple categories, otherwise, error will return.
 
 The `vcfFields()` method takes the VCF file path, `VcfFile` object or
 `RangedVcfStack` object as input, and returns a CharacterList with all
@@ -220,7 +223,7 @@ should contain the VCF file path, and are expected to satisfy the
 `dimnames()`.
 
 ```{r, VCFArraySeed}
-seed <- VCFArray:::VCFArraySeed(fl, name = "GT")
+seed <- VCFArray:::VCFArraySeed(fl, name = "GT", pfix = NULL)
 seed
 path(vcffile(seed))
 ```
