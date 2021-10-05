@@ -50,13 +50,13 @@
 .get_VCFArraySeed_basic_param <- function(seed, pfix, name)
 {
     if (pfix == "geno") {
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = name)
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = name, which = seed@gr)
     } else if (pfix == "info") {
-        param <- ScanVcfParam(fixed = NA, info = name, geno = NA)
+        param <- ScanVcfParam(fixed = NA, info = name, geno = NA, which = seed@gr)
     } else if (pfix == "fixed" && name == "REF") {
-        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA)
+        param <- ScanVcfParam(fixed = NA, info = NA, geno = NA, which = seed@gr)
     } else if (pfix == "fixed") {
-        param <- ScanVcfParam(fixed = name, info = NA, geno = NA)
+        param <- ScanVcfParam(fixed = name, info = NA, geno = NA, which = seed@gr)
     } else {
         return(NULL)
     }
